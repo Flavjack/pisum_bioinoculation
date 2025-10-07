@@ -23,18 +23,49 @@ execute:
 
 ```{r}
 #| label:  setup
-
+library(emmeans)
+library(corrplot)
+library(multcomp)
+library(FSA)
+library(agricolae)
+library(tidyverse)
+library(car)
+library(lme4)
+library(googlesheets4)
+library(factoextra)
+library(FactoMineR)
 source('https://inkaverse.com/setup.r')
 ```
 
 # Data import
 
 ```{r}
-gs <- "url" %>% 
+gs <- "https://docs.google.com/spreadsheets/d/1GgfIOmTGyvjtuVQzJgFA8ueD1yqRh7x7gyueLdQVd90/edit?usp=sharing" %>% 
   as_sheets_id()
 
-fb <- gs %>% 
-  range_read(ss = .,sheet = "fb")
+inoculation <- gs %>% 
+  range_read(ss = .,sheet = "STable3") %>% 
+   mutate(across(1:6, ~ as.factor(.)))
+
+glimpse(inoculation)
+
+climate <- gs %>% 
+  range_read(ss = .,sheet = "STable4") %>% 
+   mutate(across(1:2, ~ as.factor(.)))
+
+glimpse(climate)
+```
+
+# Data summary
+
+Summary of the number of data points recorded for each treatment and evaluated variable.
+
+```{r}
+sm <- inoculation %>% 
+  group_by(Site, treat) %>% 
+  summarise(across(pl_height:yield, ~ sum(!is.na(.))))
+
+sm
 ```
 
 # References
