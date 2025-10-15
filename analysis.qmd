@@ -115,6 +115,9 @@ fb %>%
 
 fb %>% as.data.frame(fb)
 
+glimpse(fb)
+
+str(fb)
 # germination analysis (ten variables)
 
 gsm <- ger_summary(SeedN = "seeds"
