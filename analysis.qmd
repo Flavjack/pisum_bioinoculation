@@ -222,7 +222,7 @@ mc <- merge(mc2, mc1) %>%
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
-grp <- mc %>% 
+mgt <- mc %>% 
    fplot(data = .
        , type = "bar"
        , x = "Inoculant"
@@ -237,7 +237,7 @@ grp <- mc %>%
        , color = F
        )
 
-grp
+mgt
 ```
 
 #### Synchronization Index (SYN)
@@ -265,7 +265,7 @@ mc <- merge(mc2, mc1) %>%
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
-grp <- mc %>% 
+syn <- mc %>% 
    fplot(data = .
        , type = "bar"
        , x = "Inoculant"
@@ -280,7 +280,7 @@ grp <- mc %>%
        , color = F
        )
 
-grp
+syn
 ```
 
 #### Germination vigor index (GVI)
@@ -317,7 +317,7 @@ mc <- merge(mc2, mc1) %>%
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
-grp <- mc %>% 
+gvi <- mc %>% 
    fplot(data = .
        , type = "bar"
        , x = "Inoculant"
@@ -332,10 +332,49 @@ grp <- mc %>%
        , color = F
        )
 
-grp
+gvi
 ```
 
+### Figure 2
 
+Univariate analysis of the variables that determine the agronomic characteristics of mango.
+
+```{r}
+legend <- cowplot::get_plot_component(grp, 'guide-box-top', return_all = TRUE)
+
+plot2 <- list(grp + theme(legend.position="none"
+                                        , axis.title.x=element_blank()
+                                        , axis.text.x=element_blank()
+                                        , axis.ticks.x=element_blank())
+           , mgt + theme(legend.position="none"
+                                        , axis.title.x=element_blank()
+                                        , axis.text.x=element_blank()
+                                        , axis.ticks.x=element_blank())
+           , syn + theme(legend.position="none")
+           , gvi + theme(legend.position="none")
+           ) %>% 
+  plot_grid(plotlist = ., ncol = 2
+            , labels = "auto"
+            , rel_heights = c(1, 1)
+            ) 
+
+fig2 <- plot_grid(legend, plot2, ncol = 1, align = 'v', rel_heights = c(0.05, 1))
+
+fig2 %>% 
+  ggsave2(plot = ., "submission/Figure_2.jpg"
+         , units = "cm"
+         , width = 24
+         , height = 16
+         )
+
+fig %>% 
+  ggsave2(plot = ., "submission/Figure_3.eps"
+         , units = "cm"
+         , width = 24
+         , height = 16
+         )
+
+knitr::include_graphics("submission/Figure_3.jpg")
 
 ## RO 2
 
