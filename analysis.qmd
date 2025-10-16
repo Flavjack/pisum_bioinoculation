@@ -368,19 +368,13 @@ fig2 %>%
          )
 
 fig %>% 
-  ggsave2(plot = ., "submission/Figure_3.eps"
+  ggsave2(plot = ., "submission/Figure_2.eps"
          , units = "cm"
          , width = 24
          , height = 16
          )
 
-knitr::include_graphics("submission/Figure_3.jpg")
-
-## RO 2
-
-To demonstrate the combined effects of bio-inoculation and fertilization on field experiment on pea crop
-
-```{r}
+knitr::include_graphics("submission/Figure_2.jpg")
 ```
 
 
