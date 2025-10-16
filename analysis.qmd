@@ -105,53 +105,237 @@ To evaluate the effects of bio-inoculation and PEG 6000 stress on pea seed bioma
 
 ### Germination (%)
 
+#### Standard germination
+
 ```{r}
 fb <- germination %>%
-  select(sort, Inoculant, block, seeds, starts_with("ger"))
+  select(sort, Inoculant,peg, block, seeds, starts_with("ger"))
 
-fb %>%
+gerdr <- fb
+
+prefix <- "ger_"
+dtnames <- gerdr %>% names()
+evalprf <- dtnames[grepl(prefix, dtnames)]
+
+gercount <- gerdr %>% 
+  select(starts_with(prefix)) %>% 
+  rowwise() %>% 
+  summarize(.data[[evalprf[1]]], d = list(diff(c_across(everything())))) %>% 
+  unnest_wider(d, names_sep="", names_repair=\(x) evalprf) %>% 
+  cbind(gerdr %>% select(!starts_with(prefix)), .) %>% 
+  mutate(across(where(is.numeric), ~ ifelse(. < 0, 0, .)))
+  
+# gercount %>% web_table()
+```
+
+#### Performe ten germination indices
+
+```{r}
+gercount %>%
   head(10) %>%
   kable(caption = "Germination dataset", align = "c")
 
-fb %>% as.data.frame(fb)
+glimpse(gercount)
 
-glimpse(fb)
-
-str(fb)
 # germination analysis (ten variables)
 
-gsm <- ger_summary(SeedN = "seeds"
+gsm <- gercount %>%
+  as.data.frame() %>% 
+  ger_summary(SeedN = "seeds"
                    , evalName = "ger_"
-                   , data = fb
+                   , data = .
                    )
 
-# Prosopis data set processed
+# Pea data set processed
 
 gsm %>% 
   head(10) %>% 
   mutate(across(where(is.numeric), ~round(., 2))) %>% 
   kable(caption = "Function ger_summary performe ten germination indices")
+```
 
+#### Germination Percentage (GRP)
 
-
-## Germination Percentage (GRP)
-
+```{r}
 # analysis of variance
 
-av <- aov(grp ~ nacl*temp + rep, data = gsm)
+av <- lmer(grp ~ 1 + (1|block) + Inoculant*peg, data = gsm)
 
-# mean comparison test
+Anova(av, type = 3, test.statistic = "F")
 
-mc_grp <- ger_testcomp(aov = av
-                       , comp = c("temp", "nacl")
-                       , type = "snk"
-                       )
+mc1 <- emmeans(av, ~ peg|Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  rename(sig1 = ".group")
 
-# data result
+mc2 <- emmeans(av, ~ Inoculant|peg) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  mutate(across(".group", ~ toupper(.))) %>% 
+  rename(sig2 = ".group")
 
-mc_grp$table %>% 
-   kable(caption = "Germination percentage mean comparision")
+mc <- merge(mc2, mc1) %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Germination percentage mean comparision")
+
+grp <- mc %>% 
+   fplot(data = .
+       , type = "bar"
+       , x = "Inoculant"
+       , y = "emmean"
+       , group = "peg"
+       , ylimits = c(0, 120, 30)
+       , ylab = "Germination ('%')"
+       , xlab = "Inoculant"
+       , glab = "PEG (MPa)"
+       , error = "SE"
+       , sig = "group"
+       , color = F
+       )
+
+grp
 ```
+
+#### Mean Germination Time (MGT)
+
+```{r}
+# analysis of variance
+
+av <- lmer(mgt ~ 1 + (1|block) + Inoculant*peg, data = gsm)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ peg|Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Inoculant|peg) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  mutate(across(".group", ~ toupper(.))) %>% 
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Germination percentage mean comparision")
+
+grp <- mc %>% 
+   fplot(data = .
+       , type = "bar"
+       , x = "Inoculant"
+       , y = "emmean"
+       , group = "peg"
+       , ylimits = c(0, 3, 0.5)
+       , ylab = "Mean germination time (days)"
+       , xlab = "Inoculant"
+       , glab = "PEG (MPa)"
+       , error = "SE"
+       , sig = "group"
+       , color = F
+       )
+
+grp
+```
+
+#### Synchronization Index (SYN)
+
+```{r}
+# analysis of variance
+
+av <- lmer(syn ~ 1 + (1|block) + Inoculant*peg, data = gsm)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ peg|Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Inoculant|peg) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  mutate(across(".group", ~ toupper(.))) %>% 
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Germination percentage mean comparision")
+
+grp <- mc %>% 
+   fplot(data = .
+       , type = "bar"
+       , x = "Inoculant"
+       , y = "emmean"
+       , group = "peg"
+       , ylimits = c(0, 1, 0.25)
+       , ylab = "Synchronization Index"
+       , xlab = "Inoculant"
+       , glab = "PEG (MPa)"
+       , error = "SE"
+       , sig = "group"
+       , color = F
+       )
+
+grp
+```
+
+#### Germination vigor index (GVI)
+
+```{r}
+# analysis of variance
+
+weight_res <- germination %>%
+  group_by(Inoculant, peg, block) %>%
+  summarise(weight = mean(peso, na.rm = TRUE), .groups = "drop")
+
+gsm2 <- gsm %>%
+  left_join(weight_res, by = c("Inoculant", "peg", "block")) %>%
+  mutate(gv = weight * grp/100) %>% 
+   mutate(across(where(is.numeric), ~round(., 2)))
+
+av <- lmer(gv ~ 1 + (1|block) + Inoculant*peg, data = gsm2)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ peg|Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Inoculant|peg) %>%
+  cld(Letters = letters, reversed = T) %>% 
+  mutate(across(".group", ~ trimws(.))) %>% 
+  mutate(across(".group", ~ toupper(.))) %>% 
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Germination percentage mean comparision")
+
+grp <- mc %>% 
+   fplot(data = .
+       , type = "bar"
+       , x = "Inoculant"
+       , y = "emmean"
+       , group = "peg"
+       , ylimits = c(0, 6, 2)
+       , ylab = "Germination vigor Index"
+       , xlab = "Inoculant"
+       , glab = "PEG (MPa)"
+       , error = "SE"
+       , sig = "group"
+       , color = F
+       )
+
+grp
+```
+
+
 
 ## RO 2
 
