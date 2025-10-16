@@ -121,7 +121,7 @@ str(fb)
 # germination analysis (ten variables)
 
 gsm <- ger_summary(SeedN = "seeds"
-                   , evalName = "ger"
+                   , evalName = "ger_"
                    , data = fb
                    )
 
