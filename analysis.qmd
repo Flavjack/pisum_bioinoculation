@@ -175,7 +175,8 @@ mc2 <- emmeans(av, ~ Inoculant|peg) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig1", "sig2"), sep = "")
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  arrange(Inoculant, desc(peg))
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
@@ -185,13 +186,13 @@ grp <- mc %>%
        , x = "Inoculant"
        , y = "emmean"
        , group = "peg"
-       , ylimits = c(0, 120, 30)
+       , ylimits = c(0, 200, 50)
        , ylab = "Germination ('%')"
        , xlab = "Inoculant"
        , glab = "PEG (MPa)"
        , error = "SE"
        , sig = "group"
-       , color = F
+       , color = T
        )
 
 grp
@@ -228,13 +229,13 @@ mgt <- mc %>%
        , x = "Inoculant"
        , y = "emmean"
        , group = "peg"
-       , ylimits = c(0, 3, 0.5)
+       , ylimits = c(0, 6, 1)
        , ylab = "Mean germination time (days)"
        , xlab = "Inoculant"
        , glab = "PEG (MPa)"
        , error = "SE"
        , sig = "group"
-       , color = F
+       , color = T
        )
 
 mgt
@@ -271,13 +272,13 @@ syn <- mc %>%
        , x = "Inoculant"
        , y = "emmean"
        , group = "peg"
-       , ylimits = c(0, 1, 0.25)
+       , ylimits = c(0, 2, 0.5)
        , ylab = "Synchronization Index"
        , xlab = "Inoculant"
        , glab = "PEG (MPa)"
        , error = "SE"
        , sig = "group"
-       , color = F
+       , color = T
        )
 
 syn
@@ -323,19 +324,19 @@ gvi <- mc %>%
        , x = "Inoculant"
        , y = "emmean"
        , group = "peg"
-       , ylimits = c(0, 6, 2)
+       , ylimits = c(0, 10, 2)
        , ylab = "Germination vigor Index"
        , xlab = "Inoculant"
        , glab = "PEG (MPa)"
        , error = "SE"
        , sig = "group"
-       , color = F
+       , color = T
        )
 
 gvi
 ```
 
-### Figure 2
+#### Figure 2
 
 Univariate analysis of the variables that determine the agronomic characteristics of mango.
 
@@ -367,7 +368,7 @@ fig2 %>%
          , height = 16
          )
 
-fig %>% 
+fig2 %>% 
   ggsave2(plot = ., "submission/Figure_2.eps"
          , units = "cm"
          , width = 24
@@ -376,6 +377,36 @@ fig %>%
 
 knitr::include_graphics("submission/Figure_2.jpg")
 ```
+
+#### Multivariate
+
+Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
+
+```{r}
+mv <- gsm2 %>% 
+  group_by(Inoculant, peg) %>% 
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%   
+  unite("treat", Inoculant:peg, sep = " ")
+  
+pca <- mv %>% 
+  PCA(scale.unit = T, quali.sup = 1, graph = F) 
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+f4a <- plot.PCA(x = pca, choix = "var"
+                , cex=0.8
+                , label = "var"
+                )
+
+f4b <- plot.PCA(x = pca, choix = "ind"
+                , habillage = 1
+                , invisible = c("ind")
+                , cex=0.8
+                ) 
+```
+
 
 
 
