@@ -384,9 +384,11 @@ Principal Component Analysis (PCA) of agronomic traits in the mango crop based o
 
 ```{r}
 mv <- gsm2 %>% 
-  group_by(Inoculant, peg) %>% 
+  group_by(Inoculant, peg) %>%
+  select(grp, mgt, syn, gv) %>% 
   summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%   
-  unite("treat", Inoculant:peg, sep = " ")
+  unite("treat", Inoculant:peg, sep = " ") %>% 
+  mutate(treat = paste0(treat, " MPa")) 
   
 pca <- mv %>% 
   PCA(scale.unit = T, quali.sup = 1, graph = F) 
@@ -395,18 +397,111 @@ pca <- mv %>%
 
 summary(pca, nbelements = Inf, nb.dec = 2)
 
-f4a <- plot.PCA(x = pca, choix = "var"
+f3a <- plot.PCA(x = pca, choix = "var"
                 , cex=0.8
                 , label = "var"
                 )
 
-f4b <- plot.PCA(x = pca, choix = "ind"
+f3b <- plot.PCA(x = pca, choix = "ind"
                 , habillage = 1
                 , invisible = c("ind")
                 , cex=0.8
+                , ylim = c(-3,3)
+                , xlim = c(-4,4)
                 ) 
 ```
 
+#### Figure 3
+
+Principal Component Analysis (PCA).
+
+```{r}
+fig <- list(f3a, f3b) %>% 
+  plot_grid(plotlist = ., ncol = 2, nrow = 1
+            , labels = "auto"
+            , rel_widths = c(1, 1.3)
+            ) 
+fig %>% 
+  ggsave2(plot = ., "submission/Figure_3.jpg", units = "cm"
+          , width = 25, height = 10
+          ) 
+
+fig %>% 
+  ggsave2(plot = ., "submission/Figure_3.eps", units = "cm"
+          , width = 25, height = 10
+          ) 
+
+knitr::include_graphics("submission/Figure_3.jpg")
+```
+
+#### Correlation
+
+Principal Component Analysis (PCA).
+
+```{r}
+# ---- 1. Selecciona las variables de evaluación ----
+vars_eval <- c("pl_height","days_flower", "pod_weight", "pod_n", "yield")
+
+# ---- 2. Reestructurar datos ----
+wide_data <- inoculation %>%
+  select(Site, all_of(vars_eval)) %>%
+  pivot_wider(
+    names_from = Site,
+    values_from = all_of(vars_eval),
+    names_sep = "_",
+    values_fn = mean
+  ) %>%
+  mutate(across(where(is.character) | where(is.factor), ~ as.numeric(as.character(.))))
+
+# ---- 3. Calcular correlaciones con control de NAs ----
+corr_values <- map_dfr(vars_eval, function(var) {
+  col1 <- paste0(var, "_Lamud")
+  col2 <- paste0(var, "_Molinopma")
+  
+  if (all(c(col1, col2) %in% colnames(wide_data))) {
+    # Filtrar filas con datos completos para esta variable
+    df_tmp <- wide_data %>%
+      filter(!is.na(.data[[col1]]) & !is.na(.data[[col2]]))
+    
+    if (nrow(df_tmp) > 2) {  # solo si hay suficientes datos
+      test <- cor.test(
+        df_tmp[[col1]],
+        df_tmp[[col2]],
+        use = "pairwise.complete.obs",
+        method = "pearson"
+      )
+      data.frame(
+        variable = var,
+        correlation = test$estimate,
+        p_value = test$p.value
+      )
+    } else {
+      data.frame(variable = var, correlation = NA, p_value = NA)
+    }
+  } else {
+    data.frame(variable = var, correlation = NA, p_value = NA)
+  }
+}) %>%
+  mutate(signif = ifelse(p_value < 0.05, "*", ""),
+         signif_color = ifelse(p_value < 0.05, "Significativa", "No significativa"))
+
+# ---- 4. Gráfico ----
+ggplot(corr_values, aes(x = reorder(variable, correlation), y = correlation, fill = signif_color)) +
+  geom_col(color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_text(aes(label = sprintf("r = %.2f\np = %.3f%s", correlation, p_value, signif)), 
+            vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c("Significativa" = "#e63946", "No significativa" = "#a8dadc")) +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Correlación entre sitios (Lamud vs Molino)",
+    subtitle = "Asterisco (*) indica correlación significativa (p < 0.05)",
+    x = "Variable de evaluación",
+    y = "Coeficiente de correlación (r)",
+    fill = "Significancia"
+  ) +
+  coord_flip()
+```
 
 
 
