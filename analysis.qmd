@@ -436,73 +436,132 @@ knitr::include_graphics("submission/Figure_3.jpg")
 
 #### Correlation
 
-Principal Component Analysis (PCA).
-
 ```{r}
 # ---- 1. Selecciona las variables de evaluación ----
 vars_eval <- c("pl_height","days_flower", "pod_weight", "pod_n", "yield")
 
-# ---- 2. Reestructurar datos ----
-wide_data <- inoculation %>%
-  select(Site, all_of(vars_eval)) %>%
-  pivot_wider(
-    names_from = Site,
-    values_from = all_of(vars_eval),
-    names_sep = "_",
-    values_fn = mean
-  ) %>%
-  mutate(across(where(is.character) | where(is.factor), ~ as.numeric(as.character(.))))
+# ---- 2. Asegurar que las variables de interés sean numéricas antes de pivotar ----
+df <- inoculation %>%
+  mutate(across(all_of(vars_eval), ~ suppressWarnings(as.numeric(as.character(.)))))
 
-# ---- 3. Calcular correlaciones con control de NAs ----
-corr_values <- map_dfr(vars_eval, function(var) {
-  col1 <- paste0(var, "_Lamud")
-  col2 <- paste0(var, "_Molinopma")
+# Separar datos por sitio
+lamud <- df %>%
+  filter(Site == "Lamud") %>%
+  select(treat, block, all_of(vars_eval)) %>%
+  rename_with(~ paste0(., "_Lamud"), all_of(vars_eval))
+
+molino <- df %>%
+  filter(Site == "Molinopampa") %>%
+  select(treat, block, all_of(vars_eval)) %>%
+  rename_with(~ paste0(., "_Molinopampa"), all_of(vars_eval))
+
+# Unir por tratamiento y bloque
+merged <- inner_join(lamud, molino, by = c("treat", "block"))
+
+# Crear todas las combinaciones entre variables de Lamud y Molinopampa
+corr_grid <- expand.grid(
+  x = vars_eval,
+  y = vars_eval,
+  stringsAsFactors = FALSE
+)
+
+# Calcular las correlaciones
+corr_values <- map2_dfr(corr_grid$x, corr_grid$y, function(var_x, var_y) {
+  col_x <- merged[[paste0(var_x, "_Lamud")]]
+  col_y <- merged[[paste0(var_y, "_Molinopampa")]]
   
-  if (all(c(col1, col2) %in% colnames(wide_data))) {
-    # Filtrar filas con datos completos para esta variable
-    df_tmp <- wide_data %>%
-      filter(!is.na(.data[[col1]]) & !is.na(.data[[col2]]))
-    
-    if (nrow(df_tmp) > 2) {  # solo si hay suficientes datos
-      test <- cor.test(
-        df_tmp[[col1]],
-        df_tmp[[col2]],
-        use = "pairwise.complete.obs",
-        method = "pearson"
-      )
-      data.frame(
-        variable = var,
-        correlation = test$estimate,
-        p_value = test$p.value
-      )
-    } else {
-      data.frame(variable = var, correlation = NA, p_value = NA)
-    }
+  if (is.numeric(col_x) && is.numeric(col_y)) {
+    test <- cor.test(col_x, col_y, use = "pairwise.complete.obs")
+    tibble(
+      x = var_x,
+      y = var_y,
+      r = test$estimate,
+      p_value = test$p.value
+    )
   } else {
-    data.frame(variable = var, correlation = NA, p_value = NA)
+    tibble(x = var_x, y = var_y, r = NA, p_value = NA)
   }
-}) %>%
-  mutate(signif = ifelse(p_value < 0.05, "*", ""),
-         signif_color = ifelse(p_value < 0.05, "Significativa", "No significativa"))
+})
 
-# ---- 4. Gráfico ----
-ggplot(corr_values, aes(x = reorder(variable, correlation), y = correlation, fill = signif_color)) +
-  geom_col(color = "black") +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-  geom_text(aes(label = sprintf("r = %.2f\np = %.3f%s", correlation, p_value, signif)), 
-            vjust = -0.5, size = 3.5) +
-  scale_fill_manual(values = c("Significativa" = "#e63946", "No significativa" = "#a8dadc")) +
-  theme_minimal(base_size = 13) +
-  labs(
-    title = "Correlación entre sitios (Lamud vs Molino)",
-    subtitle = "Asterisco (*) indica correlación significativa (p < 0.05)",
-    x = "Variable de evaluación",
-    y = "Coeficiente de correlación (r)",
-    fill = "Significancia"
+# Clasificar significancia
+corr_values <- corr_values %>%
+  mutate(
+    signif = ifelse(p_value < 0.05, "*", ""),
+    label = sprintf("r = %.2f%s", r, signif)
+  )
+
+# --- Graficar mapa de calor ---
+ggplot(corr_values, aes(x = x, y = y, fill = r)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = label), size = 4, color = "black", fontface = "bold") +
+  scale_fill_gradient2(
+    low = "#4575b4", mid = "white", high = "#d73027",
+    midpoint = 0, limits = c(-1, 1),
+    name = "Coeficiente de correlación (r)"
   ) +
-  coord_flip()
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Mapa de calor de correlaciones entre Lamud y Molinopampa",
+    subtitle = "Asterisco (*) indica correlación significativa (p < 0.05)",
+    x = "Lamud",
+    y = "Molinopampa"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),
+    axis.text.y = element_text(face = "bold"),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
 ```
 
+#### BLUES
+
+```{r}
+# Variables de evaluación
+vars <- c("pl_height", "days_flower", "n_nod", "w_nod", "disease_sev", "oidio", "pod_weight", "pod_n", "yield" )
+
+df <- inoculation %>%
+  mutate(across(all_of(vars_eval), ~ suppressWarnings(as.numeric(as.character(.)))))
+
+# Función para ajustar cada modelo
+blues_all <- lapply(vars, function(v) {
+  # Filtrar datos válidos
+  df_sub <- df %>%
+    filter(!is.na(.data[[v]])) %>%
+    filter(n_distinct(Site) > 1, n_distinct(treat) > 1)
+  
+  # Verificar si quedan suficientes datos
+  if (nrow(df_sub) < 5) return(NULL)
+  
+  # Ajustar modelo mixto
+  model <- lmer(as.formula(paste(v, "~ Site + treat + (1 | Site:block)")),
+                data = df_sub, REML = TRUE)
+  
+  # Medias ajustadas (BLUEs)
+  emm <- emmeans(model, ~ treat | Site)
+  df_emm <- as.data.frame(emm)
+  df_emm$variable <- v
+  df_emm
+}) %>%
+  bind_rows()
+
+# Agrupar y calcular resumen (incluye desviación estándar)
+blues_summary <- blues_all %>%
+  group_by(Site, variable) %>%
+  summarise(
+    mean_emmean = mean(emmean, na.rm = TRUE),
+    sd = sd(emmean, na.rm = TRUE),
+    SE = mean(SE, na.rm = TRUE),
+    df = mean(df, na.rm = TRUE),
+    lower.CL = mean(lower.CL, na.rm = TRUE),
+    upper.CL = mean(upper.CL, na.rm = TRUE),
+    min = min(emmean, na.rm = TRUE),
+    max = max(emmean, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+print(blues_summary)
+```
 
 
 # References
