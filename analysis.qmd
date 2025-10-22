@@ -105,52 +105,25 @@ To evaluate the effects of bio-inoculation and PEG 6000 stress on pea seed bioma
 
 ### Germination (%)
 
-#### Standard germination
-
-```{r}
-fb <- germination %>%
-  select(sort, Inoculant,peg, block, seeds, starts_with("ger"))
-
-gerdr <- fb
-
-prefix <- "ger_"
-dtnames <- gerdr %>% names()
-evalprf <- dtnames[grepl(prefix, dtnames)]
-
-gercount <- gerdr %>% 
-  select(starts_with(prefix)) %>% 
-  rowwise() %>% 
-  summarize(.data[[evalprf[1]]], d = list(diff(c_across(everything())))) %>% 
-  unnest_wider(d, names_sep="", names_repair=\(x) evalprf) %>% 
-  cbind(gerdr %>% select(!starts_with(prefix)), .) %>% 
-  mutate(across(where(is.numeric), ~ ifelse(. < 0, 0, .)))
-  
-# gercount %>% web_table()
-```
-
 #### Performe ten germination indices
 
 ```{r}
-gercount %>%
-  head(10) %>%
-  kable(caption = "Germination dataset", align = "c")
-
-glimpse(gercount)
-
 # germination analysis (ten variables)
 
-gsm <- gercount %>%
-  as.data.frame() %>% 
-  ger_summary(SeedN = "seeds"
-                   , evalName = "ger_"
-                   , data = .
-                   )
+gsm <- germination %>%
+  ger_summary(
+    factors = c("Inoculant", "peg", "block"),
+    SeedN = "seeds",
+    evalName = "ger_",
+    data = .,
+    cumulative = T
+  )
 
 # Pea data set processed
 
-gsm %>% 
-  head(10) %>% 
-  mutate(across(where(is.numeric), ~round(., 2))) %>% 
+gsm %>%
+  head(10) %>%
+  mutate(across(where(is.numeric), ~ round(., 2))) %>%
   kable(caption = "Function ger_summary performe ten germination indices")
 ```
 
@@ -159,41 +132,42 @@ gsm %>%
 ```{r}
 # analysis of variance
 
-av <- lmer(grp ~ 1 + (1|block) + Inoculant*peg, data = gsm)
+av <- lmer(grp ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg|Inoculant) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
+mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant|peg) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
+mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>% 
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   arrange(Inoculant, desc(peg))
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
-grp <- mc %>% 
-   fplot(data = .
-       , type = "bar"
-       , x = "Inoculant"
-       , y = "emmean"
-       , group = "peg"
-       , ylimits = c(0, 200, 50)
-       , ylab = "Germination ('%')"
-       , xlab = "Inoculant"
-       , glab = "PEG (MPa)"
-       , error = "SE"
-       , sig = "group"
-       , color = T
-       )
+grp <- mc %>%
+  fplot(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "peg",
+    ylimits = c(0, 200, 50),
+    ylab = "Germination ('%')",
+    xlab = "Inoculant",
+    glab = "PEG (MPa)",
+    error = "SE",
+    sig = "group",
+    color = T
+  )
 
 grp
 ```
@@ -203,40 +177,41 @@ grp
 ```{r}
 # analysis of variance
 
-av <- lmer(mgt ~ 1 + (1|block) + Inoculant*peg, data = gsm)
+av <- lmer(mgt ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg|Inoculant) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
+mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant|peg) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
+mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>% 
+mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "")
 
-mc %>% kable(caption = "Germination percentage mean comparision")
+mc %>% kable(caption = "Mean Germination Time comparision")
 
-mgt <- mc %>% 
-   fplot(data = .
-       , type = "bar"
-       , x = "Inoculant"
-       , y = "emmean"
-       , group = "peg"
-       , ylimits = c(0, 6, 1)
-       , ylab = "Mean germination time (days)"
-       , xlab = "Inoculant"
-       , glab = "PEG (MPa)"
-       , error = "SE"
-       , sig = "group"
-       , color = T
-       )
+mgt <- mc %>%
+  fplot(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "peg",
+    ylimits = c(0, 6, 1),
+    ylab = "Mean germination time (days)",
+    xlab = "Inoculant",
+    glab = "PEG (MPa)",
+    error = "SE",
+    sig = "group",
+    color = T
+  )
 
 mgt
 ```
@@ -246,40 +221,41 @@ mgt
 ```{r}
 # analysis of variance
 
-av <- lmer(syn ~ 1 + (1|block) + Inoculant*peg, data = gsm)
+av <- lmer(syn ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg|Inoculant) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
+mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant|peg) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
+mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>% 
+mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "")
 
-mc %>% kable(caption = "Germination percentage mean comparision")
+mc %>% kable(caption = "Synchronization Index mean comparision")
 
-syn <- mc %>% 
-   fplot(data = .
-       , type = "bar"
-       , x = "Inoculant"
-       , y = "emmean"
-       , group = "peg"
-       , ylimits = c(0, 2, 0.5)
-       , ylab = "Synchronization Index"
-       , xlab = "Inoculant"
-       , glab = "PEG (MPa)"
-       , error = "SE"
-       , sig = "group"
-       , color = T
-       )
+syn <- mc %>%
+  fplot(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "peg",
+    ylimits = c(0, 2, 0.5),
+    ylab = "Synchronization Index",
+    xlab = "Inoculant",
+    glab = "PEG (MPa)",
+    error = "SE",
+    sig = "group",
+    color = T
+  )
 
 syn
 ```
@@ -295,43 +271,44 @@ weight_res <- germination %>%
 
 gsm2 <- gsm %>%
   left_join(weight_res, by = c("Inoculant", "peg", "block")) %>%
-  mutate(gv = weight * grp/100) %>% 
-   mutate(across(where(is.numeric), ~round(., 2)))
+  mutate(gv = weight * grp / 100) %>%
+  mutate(across(where(is.numeric), ~ round(., 2)))
 
-av <- lmer(gv ~ 1 + (1|block) + Inoculant*peg, data = gsm2)
+av <- lmer(gv ~ 1 + (1 | block) + Inoculant * peg, data = gsm2)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg|Inoculant) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
+mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant|peg) %>%
-  cld(Letters = letters, reversed = T) %>% 
-  mutate(across(".group", ~ trimws(.))) %>% 
-  mutate(across(".group", ~ toupper(.))) %>% 
+mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>% 
+mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "")
 
-mc %>% kable(caption = "Germination percentage mean comparision")
+mc %>% kable(caption = "Germination vigor index mean comparision")
 
-gvi <- mc %>% 
-   fplot(data = .
-       , type = "bar"
-       , x = "Inoculant"
-       , y = "emmean"
-       , group = "peg"
-       , ylimits = c(0, 10, 2)
-       , ylab = "Germination vigor Index"
-       , xlab = "Inoculant"
-       , glab = "PEG (MPa)"
-       , error = "SE"
-       , sig = "group"
-       , color = T
-       )
+gvi <- mc %>%
+  fplot(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "peg",
+    ylimits = c(0, 10, 2),
+    ylab = "Germination vigor Index",
+    xlab = "Inoculant",
+    glab = "PEG (MPa)",
+    error = "SE",
+    sig = "group",
+    color = T
+  )
 
 gvi
 ```
@@ -341,39 +318,47 @@ gvi
 Univariate analysis of the variables that determine the agronomic characteristics of mango.
 
 ```{r}
-legend <- cowplot::get_plot_component(grp, 'guide-box-top', return_all = TRUE)
+legend <- cowplot::get_plot_component(grp, "guide-box-top", return_all = TRUE)
 
-plot2 <- list(grp + theme(legend.position="none"
-                                        , axis.title.x=element_blank()
-                                        , axis.text.x=element_blank()
-                                        , axis.ticks.x=element_blank())
-           , mgt + theme(legend.position="none"
-                                        , axis.title.x=element_blank()
-                                        , axis.text.x=element_blank()
-                                        , axis.ticks.x=element_blank())
-           , syn + theme(legend.position="none")
-           , gvi + theme(legend.position="none")
-           ) %>% 
-  plot_grid(plotlist = ., ncol = 2
-            , labels = "auto"
-            , rel_heights = c(1, 1)
-            ) 
+plot2 <- list(
+  grp + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  mgt + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  ),
+  syn + theme(legend.position = "none"),
+  gvi + theme(legend.position = "none")
+) %>%
+  plot_grid(
+    plotlist = ., ncol = 2,
+    labels = "auto",
+    rel_heights = c(1, 1)
+  )
 
-fig2 <- plot_grid(legend, plot2, ncol = 1, align = 'v', rel_heights = c(0.05, 1))
+fig2 <- plot_grid(legend, plot2, ncol = 1, align = "v", rel_heights = c(0.05, 1))
 
-fig2 %>% 
-  ggsave2(plot = ., "submission/Figure_2.jpg"
-         , units = "cm"
-         , width = 24
-         , height = 16
-         )
+fig2 %>%
+  ggsave2(
+    plot = ., "submission/Figure_2.jpg",
+    units = "cm",
+    width = 24,
+    height = 16
+  )
 
-fig2 %>% 
-  ggsave2(plot = ., "submission/Figure_2.eps"
-         , units = "cm"
-         , width = 24
-         , height = 16
-         )
+fig2 %>%
+  ggsave2(
+    plot = ., "submission/Figure_2.eps",
+    units = "cm",
+    width = 24,
+    height = 16
+  )
 
 knitr::include_graphics("submission/Figure_2.jpg")
 ```
@@ -383,32 +368,34 @@ knitr::include_graphics("submission/Figure_2.jpg")
 Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
 
 ```{r}
-mv <- gsm2 %>% 
+mv <- gsm2 %>%
   group_by(Inoculant, peg) %>%
-  select(grp, mgt, syn, gv) %>% 
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%   
-  unite("treat", Inoculant:peg, sep = " ") %>% 
-  mutate(treat = paste0(treat, " MPa")) 
-  
-pca <- mv %>% 
-  PCA(scale.unit = T, quali.sup = 1, graph = F) 
+  select(grp, mgt, syn, gv) %>%
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
+  unite("treat", Inoculant:peg, sep = " ") %>%
+  mutate(treat = paste0(treat, " MPa"))
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
 
 # summary
 
 summary(pca, nbelements = Inf, nb.dec = 2)
 
-f3a <- plot.PCA(x = pca, choix = "var"
-                , cex=0.8
-                , label = "var"
-                )
+f3a <- plot.PCA(
+  x = pca, choix = "var",
+  cex = 0.8,
+  label = "var"
+)
 
-f3b <- plot.PCA(x = pca, choix = "ind"
-                , habillage = 1
-                , invisible = c("ind")
-                , cex=0.8
-                , ylim = c(-3,3)
-                , xlim = c(-4,4)
-                ) 
+f3b <- plot.PCA(
+  x = pca, choix = "ind",
+  habillage = 1,
+  invisible = c("ind"),
+  cex = 0.8,
+  ylim = c(-3, 3),
+  xlim = c(-4, 4)
+)
 ```
 
 #### Figure 3
@@ -416,20 +403,23 @@ f3b <- plot.PCA(x = pca, choix = "ind"
 Principal Component Analysis (PCA).
 
 ```{r}
-fig <- list(f3a, f3b) %>% 
-  plot_grid(plotlist = ., ncol = 2, nrow = 1
-            , labels = "auto"
-            , rel_widths = c(1, 1.3)
-            ) 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_3.jpg", units = "cm"
-          , width = 25, height = 10
-          ) 
+fig <- list(f3a, f3b) %>%
+  plot_grid(
+    plotlist = ., ncol = 2, nrow = 1,
+    labels = "auto",
+    rel_widths = c(1, 1.3)
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_3.jpg", units = "cm",
+    width = 25, height = 10
+  )
 
-fig %>% 
-  ggsave2(plot = ., "submission/Figure_3.eps", units = "cm"
-          , width = 25, height = 10
-          ) 
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_3.eps", units = "cm",
+    width = 25, height = 10
+  )
 
 knitr::include_graphics("submission/Figure_3.jpg")
 ```
@@ -437,131 +427,133 @@ knitr::include_graphics("submission/Figure_3.jpg")
 #### Correlation
 
 ```{r}
-# ---- 1. Selecciona las variables de evaluación ----
-vars_eval <- c("pl_height","days_flower", "pod_weight", "pod_n", "yield")
+# Variables de interés
+vars_eval <- c("pl_height", "days_flower", "pod_weight", "pod_n", "yield")
 
-# ---- 2. Asegurar que las variables de interés sean numéricas antes de pivotar ----
-df <- inoculation %>%
-  mutate(across(all_of(vars_eval), ~ suppressWarnings(as.numeric(as.character(.)))))
-
-# Separar datos por sitio
-lamud <- df %>%
+# Crear data frames por cada sitio
+df_Lamud <- inoculation %>%
   filter(Site == "Lamud") %>%
-  select(treat, block, all_of(vars_eval)) %>%
-  rename_with(~ paste0(., "_Lamud"), all_of(vars_eval))
+  rename_with(~ paste0("Lamud_", .x), all_of(vars_eval))
 
-molino <- df %>%
+df_Molinopampa <- inoculation %>%
   filter(Site == "Molinopampa") %>%
-  select(treat, block, all_of(vars_eval)) %>%
-  rename_with(~ paste0(., "_Molinopampa"), all_of(vars_eval))
+  rename_with(~ paste0("Molinopampa_", .x), all_of(vars_eval))
 
-# Unir por tratamiento y bloque
-merged <- inner_join(lamud, molino, by = c("treat", "block"))
+#  Unir ambos sitios
+df_wide <- df_Lamud %>%
+  select(-Site) %>%
+  left_join(
+    df_Molinopampa %>% select(-Site),
+    by = c("block", "Inoculant", "Fertilization", "treat", "row")
+  ) %>%
+  select(starts_with("Lamud_"), starts_with("Molinopampa_"))
 
-# Crear todas las combinaciones entre variables de Lamud y Molinopampa
-corr_grid <- expand.grid(
-  x = vars_eval,
-  y = vars_eval,
-  stringsAsFactors = FALSE
+cor_matrix <- cor(df_wide, use = "pairwise.complete.obs")
+
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  order = "hclust",
+  addCoef.col = "black",
+  tl.col = "black",
+  tl.srt = 45,
+  col = colorRampPalette(c("red", "white", "blue"))(200) # Paleta de colores
 )
-
-# Calcular las correlaciones
-corr_values <- map2_dfr(corr_grid$x, corr_grid$y, function(var_x, var_y) {
-  col_x <- merged[[paste0(var_x, "_Lamud")]]
-  col_y <- merged[[paste0(var_y, "_Molinopampa")]]
-  
-  if (is.numeric(col_x) && is.numeric(col_y)) {
-    test <- cor.test(col_x, col_y, use = "pairwise.complete.obs")
-    tibble(
-      x = var_x,
-      y = var_y,
-      r = test$estimate,
-      p_value = test$p.value
-    )
-  } else {
-    tibble(x = var_x, y = var_y, r = NA, p_value = NA)
-  }
-})
-
-# Clasificar significancia
-corr_values <- corr_values %>%
-  mutate(
-    signif = ifelse(p_value < 0.05, "*", ""),
-    label = sprintf("r = %.2f%s", r, signif)
-  )
-
-# --- Graficar mapa de calor ---
-ggplot(corr_values, aes(x = x, y = y, fill = r)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = label), size = 4, color = "black", fontface = "bold") +
-  scale_fill_gradient2(
-    low = "#4575b4", mid = "white", high = "#d73027",
-    midpoint = 0, limits = c(-1, 1),
-    name = "Coeficiente de correlación (r)"
-  ) +
-  theme_minimal(base_size = 14) +
-  labs(
-    title = "Mapa de calor de correlaciones entre Lamud y Molinopampa",
-    subtitle = "Asterisco (*) indica correlación significativa (p < 0.05)",
-    x = "Lamud",
-    y = "Molinopampa"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold"),
-    axis.text.y = element_text(face = "bold"),
-    panel.grid = element_blank(),
-    legend.position = "right"
-  )
 ```
 
-#### BLUES
+## RO 2
+
+To demonstrate the combined effects of bio-inoculation and fertilization on field experiment on pea crop.
+
+### Plant Height (cm)
 
 ```{r}
-# Variables de evaluación
-vars <- c("pl_height", "days_flower", "n_nod", "w_nod", "disease_sev", "oidio", "pod_weight", "pod_n", "yield" )
+# analysis of variance
 
-df <- inoculation %>%
-  mutate(across(all_of(vars_eval), ~ suppressWarnings(as.numeric(as.character(.)))))
+av <- lmer(pl_height ~ 1 + (1 | block) + Site * treat, data = inoculation)
 
-# Función para ajustar cada modelo
-blues_all <- lapply(vars, function(v) {
-  # Filtrar datos válidos
-  df_sub <- df %>%
-    filter(!is.na(.data[[v]])) %>%
-    filter(n_distinct(Site) > 1, n_distinct(treat) > 1)
-  
-  # Verificar si quedan suficientes datos
-  if (nrow(df_sub) < 5) return(NULL)
-  
-  # Ajustar modelo mixto
-  model <- lmer(as.formula(paste(v, "~ Site + treat + (1 | Site:block)")),
-                data = df_sub, REML = TRUE)
-  
-  # Medias ajustadas (BLUEs)
-  emm <- emmeans(model, ~ treat | Site)
-  df_emm <- as.data.frame(emm)
-  df_emm$variable <- v
-  df_emm
-}) %>%
-  bind_rows()
+Anova(av, type = 3, test.statistic = "F")
 
-# Agrupar y calcular resumen (incluye desviación estándar)
-blues_summary <- blues_all %>%
-  group_by(Site, variable) %>%
-  summarise(
-    mean_emmean = mean(emmean, na.rm = TRUE),
-    sd = sd(emmean, na.rm = TRUE),
-    SE = mean(SE, na.rm = TRUE),
-    df = mean(df, na.rm = TRUE),
-    lower.CL = mean(lower.CL, na.rm = TRUE),
-    upper.CL = mean(upper.CL, na.rm = TRUE),
-    min = min(emmean, na.rm = TRUE),
-    max = max(emmean, na.rm = TRUE),
-    .groups = "drop"
+mc1 <- emmeans(av, ~ treat | Site) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | treat) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Plant Height mean comparision")
+
+p1 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Site",
+    y = "emmean",
+    group = "treat"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Plant Height (cm)",
+    xlab = "Site",
+    glab = "Trait",
+    error = "SE",
+    sig = "group",
+    color = T
   )
 
-print(blues_summary)
+p1
 ```
+
+### Yield
+
+```{r}
+# analysis of variance
+
+av <- lmer(yield ~ 1 + (1 | block) + Site * treat, data = inoculation)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ treat | Site) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | treat) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "")
+
+mc %>% kable(caption = "Yield mean comparision")
+
+p4 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Site",
+    y = "emmean",
+    group = "treat"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Yield",
+    xlab = "Site",
+    glab = "Trait",
+    error = "SE",
+    sig = "group",
+    color = T
+  )
+
+p4
+```
+
 
 
 # References
