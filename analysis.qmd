@@ -46,7 +46,8 @@ gs <- "https://docs.google.com/spreadsheets/d/1GgfIOmTGyvjtuVQzJgFA8ueD1yqRh7x7g
 
 germination <- gs %>%
   range_read(ss = ., sheet = "STable2") %>%
-  mutate(across(1:9, ~ as.factor(.)))
+  mutate(across(1:9, as.factor)) %>%
+  mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 glimpse(germination)
 
@@ -157,9 +158,9 @@ grp <- mc %>%
   fplot(
     data = .,
     type = "bar",
-    x = "Inoculant",
+    x = "peg",
     y = "emmean",
-    group = "peg",
+    group = "Inoculant",
     ylimits = c(0, 200, 50),
     ylab = "Germination ('%')",
     xlab = "Inoculant",
@@ -177,7 +178,7 @@ grp
 ```{r}
 # analysis of variance
 
-av <- lmer(mgt ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
+av <- lmer(mgt ~ 0 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
@@ -274,23 +275,24 @@ gsm2 <- gsm %>%
   mutate(gv = weight * grp / 100) %>%
   mutate(across(where(is.numeric), ~ round(., 2)))
 
-av <- lmer(gv ~ 1 + (1 | block) + Inoculant * peg, data = gsm2)
+av <- lmer(gv ~ 0 + (1 | block) + Inoculant * peg, data = gsm2)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+mc1 <- emmeans(av, ~ Inoculant | peg) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+mc2 <- emmeans(av, ~ peg | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "")
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 mc %>% kable(caption = "Germination vigor index mean comparision")
 
@@ -298,9 +300,9 @@ gvi <- mc %>%
   fplot(
     data = .,
     type = "bar",
-    x = "Inoculant",
+    x = "peg",
     y = "emmean",
-    group = "peg",
+    group = "Inoculant",
     ylimits = c(0, 10, 2),
     ylab = "Germination vigor Index",
     xlab = "Inoculant",
@@ -486,6 +488,12 @@ mc2 <- emmeans(av, ~ Site | treat) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
+mc3 <- emmeans(av, ~ treat) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
 mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "")
 
@@ -515,16 +523,16 @@ p1
 ```{r}
 # analysis of variance
 
-av <- lmer(yield ~ 1 + (1 | block) + Site * treat, data = inoculation)
+av <- lmer(yield ~ 0 + (1 | block) + Inoculant * Fertilization , data = inoculation)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ treat | Site) %>%
+mc1 <- emmeans(av, ~ Inoculant | Fertilization) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Site | treat) %>%
+mc2 <- emmeans(av, ~ Fertilization | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
@@ -539,9 +547,9 @@ p4 <- mc %>%
   plot_smr(
     data = .,
     type = "bar",
-    x = "Site",
+    x = "Fertilization",
     y = "emmean",
-    group = "treat"
+    group = "Inoculant"
     # , ylimits = c(0, 200, 50)
     , ylab = "Yield",
     xlab = "Site",
