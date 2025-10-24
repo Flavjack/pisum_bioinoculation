@@ -133,16 +133,16 @@ gsm %>%
 ```{r}
 # analysis of variance
 
-av <- lmer(grp ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
+av <- lmer(grp ~ 0 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+mc1 <- emmeans(av, ~ Inoculant | peg) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+mc2 <- emmeans(av, ~ peg | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
@@ -150,7 +150,7 @@ mc2 <- emmeans(av, ~ Inoculant | peg) %>%
 
 mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
-  arrange(Inoculant, desc(peg))
+  mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 mc %>% kable(caption = "Germination percentage mean comparision")
 
@@ -163,8 +163,8 @@ grp <- mc %>%
     group = "Inoculant",
     ylimits = c(0, 200, 50),
     ylab = "Germination ('%')",
-    xlab = "Inoculant",
-    glab = "PEG (MPa)",
+    xlab = "PEG (MPa)",
+    glab = "Inoculant",
     error = "SE",
     sig = "group",
     color = T
@@ -182,19 +182,20 @@ av <- lmer(mgt ~ 0 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+mc1 <- emmeans(av, ~ Inoculant | peg) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+mc2 <- emmeans(av, ~ peg | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "")
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
+  mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 mc %>% kable(caption = "Mean Germination Time comparision")
 
@@ -202,13 +203,13 @@ mgt <- mc %>%
   fplot(
     data = .,
     type = "bar",
-    x = "Inoculant",
+    x = "peg",
     y = "emmean",
-    group = "peg",
+    group = "Inoculant",
     ylimits = c(0, 6, 1),
     ylab = "Mean germination time (days)",
-    xlab = "Inoculant",
-    glab = "PEG (MPa)",
+    xlab = "PEG (MPa)",
+    glab = "Inoculant",
     error = "SE",
     sig = "group",
     color = T
@@ -222,23 +223,24 @@ mgt
 ```{r}
 # analysis of variance
 
-av <- lmer(syn ~ 1 + (1 | block) + Inoculant * peg, data = gsm)
+av <- lmer(syn ~ 0 + (1 | block) + Inoculant * peg, data = gsm)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ peg | Inoculant) %>%
+mc1 <- emmeans(av, ~ Inoculant | peg) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Inoculant | peg) %>%
+mc2 <- emmeans(av, ~ peg | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "")
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
+  mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 mc %>% kable(caption = "Synchronization Index mean comparision")
 
@@ -246,13 +248,13 @@ syn <- mc %>%
   fplot(
     data = .,
     type = "bar",
-    x = "Inoculant",
+    x = "peg",
     y = "emmean",
-    group = "peg",
+    group = "Inoculant",
     ylimits = c(0, 2, 0.5),
     ylab = "Synchronization Index",
-    xlab = "Inoculant",
-    glab = "PEG (MPa)",
+    xlab = "PEG (MPa)",
+    glab = "Inoculant",
     error = "SE",
     sig = "group",
     color = T
@@ -291,7 +293,7 @@ mc2 <- emmeans(av, ~ peg | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
 mc %>% kable(caption = "Germination vigor index mean comparision")
@@ -305,8 +307,8 @@ gvi <- mc %>%
     group = "Inoculant",
     ylimits = c(0, 10, 2),
     ylab = "Germination vigor Index",
-    xlab = "Inoculant",
-    glab = "PEG (MPa)",
+    xlab = "PEG (MPa)",
+    glab = "Inoculant",
     error = "SE",
     sig = "group",
     color = T
@@ -468,62 +470,12 @@ corrplot(
 
 To demonstrate the combined effects of bio-inoculation and fertilization on field experiment on pea crop.
 
-### Plant Height (cm)
-
-```{r}
-# analysis of variance
-
-av <- lmer(pl_height ~ 1 + (1 | block) + Site * treat, data = inoculation)
-
-Anova(av, type = 3, test.statistic = "F")
-
-mc1 <- emmeans(av, ~ treat | Site) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(".group", ~ trimws(.))) %>%
-  rename(sig1 = ".group")
-
-mc2 <- emmeans(av, ~ Site | treat) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(".group", ~ trimws(.))) %>%
-  mutate(across(".group", ~ toupper(.))) %>%
-  rename(sig2 = ".group")
-
-mc3 <- emmeans(av, ~ treat) %>%
-  cld(Letters = letters, reversed = T) %>%
-  mutate(across(".group", ~ trimws(.))) %>%
-  mutate(across(".group", ~ toupper(.))) %>%
-  rename(sig2 = ".group")
-
-mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "")
-
-mc %>% kable(caption = "Plant Height mean comparision")
-
-p1 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Site",
-    y = "emmean",
-    group = "treat"
-    # , ylimits = c(0, 200, 50)
-    , ylab = "Plant Height (cm)",
-    xlab = "Site",
-    glab = "Trait",
-    error = "SE",
-    sig = "group",
-    color = T
-  )
-
-p1
-```
-
 ### Yield
 
 ```{r}
 # analysis of variance
 
-av <- lmer(yield ~ 0 + (1 | block) + Inoculant * Fertilization , data = inoculation)
+av <- lmer(yield ~ 0 + (1 | block) + Inoculant * Fertilization, data = inoculation)
 
 Anova(av, type = 3, test.statistic = "F")
 
@@ -562,6 +514,28 @@ p4 <- mc %>%
 p4
 ```
 
+### Table 1
+
+Descriptive statistics of the variables that determine the effects of bio-inoculation and fertilization on field experiment on pea crop.
+
+```{r}
+vars <- c("pl_height", "days_flower", "pod_weight", "pod_n", "yield")
+
+labels <- c("Plant height (cm)", "Flowering (days)", "Pod weight (g)", "Pods per plant", "Yield (kg/ha)")
+
+summary_table <- map2_dfr(vars, labels, function(var, label) {
+  FSA::Summarize(reformulate("Inoculant * Fertilization", var),
+    data = inoculation, digits = 2, na.rm = TRUE
+  ) %>%
+    mutate(Variable = label) %>%
+    select(Variable, Inoculant, Fertilization, mean, sd, min, max)
+})
+
+summary_table %>% kable(align = "c")
+
+summary_table %>%
+  write_sheet(ss = gs, sheet = "tb1")
+```
 
 
 # References
