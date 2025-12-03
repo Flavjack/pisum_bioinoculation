@@ -537,6 +537,67 @@ summary_table %>%
   write_sheet(ss = gs, sheet = "tb1")
 ```
 
+#### Multivariate
+
+Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
+
+```{r}
+mv <- inoculation %>%
+  group_by(Inoculant, Fertilization) %>%
+  select(pl_height, days_flower, pod_weight, pod_n, yield) %>%
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
+  unite("treat", Inoculant:Fertilization, sep = "-")%>% 
+   rename(ph = pl_height
+         , fd = days_flower
+         , pd = pod_weight
+         , pn = pod_n
+         , Yield = yield)
+
+pca <- mv %>%
+  PCA(scale.unit = T, quali.sup = 1, graph = F)
+
+# summary
+
+summary(pca, nbelements = Inf, nb.dec = 2)
+
+f4a <- plot.PCA(
+  x = pca, choix = "var",
+  cex = 0.8,
+  label = "var"
+)
+
+f4b <- plot.PCA(
+  x = pca, choix = "ind",
+  habillage = 1,
+  invisible = c("ind"),
+  cex = 0.8,
+  ylim = c(-3, 3),
+  xlim = c(-4, 4)
+)
+```
+
+#### Figure 4
+
+Principal Component Analysis (PCA).
+
+```{r}
+fig <- list(f4a, f4b) %>%
+  plot_grid(
+    plotlist = ., ncol = 2, nrow = 1,
+    labels = "auto",
+    rel_widths = c(1, 1.3)
+  )
+fig %>%
+  ggsave2(
+    plot = ., "submission/Figure_4.jpg", units = "cm",
+    width = 25, height = 10
+  )
+
+knitr::include_graphics("submission/Figure_4.jpg")
+```
+
+
+
 
 # References
 
