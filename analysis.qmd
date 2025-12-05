@@ -576,7 +576,7 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
 mc <- na.omit(mc)
@@ -598,7 +598,7 @@ p1 <- mc %>%
     # sig = "group",
     color = T
   ) +
-  facet_wrap(~ Site)
+  facet_wrap(~Site)
 
 p1
 ```
@@ -624,7 +624,7 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
 mc <- na.omit(mc)
@@ -646,7 +646,7 @@ p2 <- mc %>%
     # sig = "group",
     color = T
   ) +
-  facet_wrap(~ Site)
+  facet_wrap(~Site)
 
 p2
 ```
@@ -672,7 +672,7 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
 mc <- na.omit(mc)
@@ -694,7 +694,7 @@ p3 <- mc %>%
     # sig = "group",
     color = T
   ) +
-  facet_wrap(~ Site)
+  facet_wrap(~Site)
 
 p3
 ```
@@ -704,7 +704,7 @@ p3
 ```{r}
 # analysis of variance
 
-av <- lmer(pod_n~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+av <- lmer(pod_n ~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
 
 Anova(av, type = 3, test.statistic = "F")
 
@@ -720,7 +720,7 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
 mc <- na.omit(mc)
@@ -735,14 +735,14 @@ p4 <- mc %>%
     y = "emmean",
     group = "Fertilization"
     # , ylimits = c(0, 200, 50)
-    , ylab = "Pods plant^{-1}",
+    , ylab = "Pods (pods/plants)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
     # sig = "group",
     color = T
   ) +
-  facet_wrap(~ Site)
+  facet_wrap(~Site)
 
 p4
 ```
@@ -752,7 +752,7 @@ p4
 ```{r}
 # analysis of variance
 
-av <- lmer(yield~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+av <- lmer(yield ~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
 
 Anova(av, type = 3, test.statistic = "F")
 
@@ -768,7 +768,7 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
 mc <- na.omit(mc)
@@ -783,14 +783,15 @@ p5 <- mc %>%
     y = "emmean",
     group = "Fertilization"
     # , ylimits = c(0, 200, 50)
-    , ylab = "Yield kg.ha^{-1}",
+    , ylab = "Yield (kg/ha)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
     # sig = "group",
     color = T
   ) +
-  facet_wrap(~ Site)
+  facet_wrap(~Site) +
+  theme(axis.text.y = element_text(angle = 90, vjust = 0.5))
 
 p5
 ```
@@ -808,21 +809,21 @@ plot2 <- list(
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    strip.text.x = element_text()  # muestra site
+    strip.text.x = element_text() # muestra site
   ),
   p2 + theme(
     legend.position = "none",
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    strip.text.x = element_blank()  # oculta site
+    strip.text.x = element_blank() # oculta site
   ),
   p3 + theme(
     legend.position = "none",
     axis.title.x = element_blank(),
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    strip.text.x = element_blank() 
+    strip.text.x = element_blank()
   ),
   p4 + theme(
     legend.position = "none",
@@ -833,7 +834,7 @@ plot2 <- list(
   ),
   p5 + theme(
     legend.position = "none",
-    strip.text.x = element_blank()  # oculta site
+    strip.text.x = element_blank() # oculta site
   )
 ) %>%
   plot_grid(
