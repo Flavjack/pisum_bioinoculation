@@ -555,48 +555,304 @@ corrplot(
 
 To demonstrate the combined effects of bio-inoculation and fertilization on field experiment on pea crop.
 
-### Yield
+### Plant Height
 
 ```{r}
 # analysis of variance
 
-av <- lmer(yield ~ 0 + (1 | block) + Inoculant * Fertilization, data = inoculation)
+av <- lmer(pl_height ~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
 
 Anova(av, type = 3, test.statistic = "F")
 
-mc1 <- emmeans(av, ~ Inoculant | Fertilization) %>%
+mc1 <- emmeans(av, ~ Site | Inoculant | Fertilization) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   rename(sig1 = ".group")
 
-mc2 <- emmeans(av, ~ Fertilization | Inoculant) %>%
+mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   cld(Letters = letters, reversed = T) %>%
   mutate(across(".group", ~ trimws(.))) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
 mc <- merge(mc2, mc1) %>%
-  unite(col = "group", c("sig1", "sig2"), sep = "")
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc %>% kable(caption = "Yield mean comparision")
+mc <- na.omit(mc)
+
+mc %>% kable(caption = "Plant Height mean comparision")
+
+p1 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "Fertilization"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Plant height (cm)",
+    xlab = "Inoculant",
+    glab = "Dose",
+    error = "SE",
+    # sig = "group",
+    color = T
+  ) +
+  facet_wrap(~ Site)
+
+p1
+```
+
+### Flowering
+
+```{r}
+# analysis of variance
+
+av <- lmer(days_flower ~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ Site | Inoculant | Fertilization) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
+
+mc <- na.omit(mc)
+
+mc %>% kable(caption = "Flowering mean comparision")
+
+p2 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "Fertilization"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Flowering (days)",
+    xlab = "Inoculant",
+    glab = "Dose",
+    error = "SE",
+    # sig = "group",
+    color = T
+  ) +
+  facet_wrap(~ Site)
+
+p2
+```
+
+### Pod weight
+
+```{r}
+# analysis of variance
+
+av <- lmer(pod_weight ~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ Site | Inoculant | Fertilization) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
+
+mc <- na.omit(mc)
+
+mc %>% kable(caption = "Pod weight mean comparision")
+
+p3 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "Fertilization"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Pod weight (g)",
+    xlab = "Inoculant",
+    glab = "Dose",
+    error = "SE",
+    # sig = "group",
+    color = T
+  ) +
+  facet_wrap(~ Site)
+
+p3
+```
+
+### Pods per plant
+
+```{r}
+# analysis of variance
+
+av <- lmer(pod_n~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ Site | Inoculant | Fertilization) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
+
+mc <- na.omit(mc)
+
+mc %>% kable(caption = "Pod weight mean comparision")
 
 p4 <- mc %>%
   plot_smr(
     data = .,
     type = "bar",
-    x = "Fertilization",
+    x = "Inoculant",
     y = "emmean",
-    group = "Inoculant"
+    group = "Fertilization"
     # , ylimits = c(0, 200, 50)
-    , ylab = "Yield",
-    xlab = "Site",
-    glab = "Trait",
+    , ylab = "Pods plant^{-1}",
+    xlab = "Inoculant",
+    glab = "Dose",
     error = "SE",
-    sig = "group",
+    # sig = "group",
     color = T
-  )
+  ) +
+  facet_wrap(~ Site)
 
 p4
+```
+
+### Yield
+
+```{r}
+# analysis of variance
+
+av <- lmer(yield~ 0 + (1 | block) + Inoculant * Fertilization + Site, data = inoculation)
+
+Anova(av, type = 3, test.statistic = "F")
+
+mc1 <- emmeans(av, ~ Site | Inoculant | Fertilization) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  rename(sig1 = ".group")
+
+mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
+  cld(Letters = letters, reversed = T) %>%
+  mutate(across(".group", ~ trimws(.))) %>%
+  mutate(across(".group", ~ toupper(.))) %>%
+  rename(sig2 = ".group")
+
+mc <- merge(mc2, mc1) %>%
+  unite(col = "group", c("sig1", "sig2"), sep = "") %>% 
+  mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
+
+mc <- na.omit(mc)
+
+mc %>% kable(caption = "Yield mean comparision")
+
+p5 <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "Inoculant",
+    y = "emmean",
+    group = "Fertilization"
+    # , ylimits = c(0, 200, 50)
+    , ylab = "Yield kg.ha^{-1}",
+    xlab = "Inoculant",
+    glab = "Dose",
+    error = "SE",
+    # sig = "group",
+    color = T
+  ) +
+  facet_wrap(~ Site)
+
+p5
+```
+
+#### Figure 5
+
+Univariate analysis of the variables that determine the agronomic characteristics of mango.
+
+```{r}
+legend <- cowplot::get_plot_component(p1, "guide-box-top", return_all = TRUE)
+
+plot2 <- list(
+  p1 + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text.x = element_text()  # muestra site
+  ),
+  p2 + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text.x = element_blank()  # oculta site
+  ),
+  p3 + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text.x = element_blank() 
+  ),
+  p4 + theme(
+    legend.position = "none",
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    strip.text.x = element_blank()
+  ),
+  p5 + theme(
+    legend.position = "none",
+    strip.text.x = element_blank()  # oculta site
+  )
+) %>%
+  plot_grid(
+    plotlist = ., ncol = 1,
+    labels = "auto",
+    rel_heights = c(1, 1)
+  )
+
+fig5 <- plot_grid(legend, plot2, ncol = 1, align = "v", rel_heights = c(0.05, 1))
+
+fig5 %>%
+  ggsave2(
+    plot = ., "submission/Figure_5.jpg",
+    units = "cm",
+    width = 24,
+    height = 25
+  )
+
+knitr::include_graphics("submission/Figure_5.jpg")
 ```
 
 ### Table 1
