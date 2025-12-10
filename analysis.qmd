@@ -422,7 +422,7 @@ knitr::include_graphics(pp)
 mv <- gsm2 %>%
   group_by(Inoculant, peg) %>%
   dplyr::select(grp, mgt, syn, gv) %>%
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) 
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T)))
 
 pca <- mv %>%
   PCA(scale.unit = T, quali.sup = c(1, 2), graph = F)
@@ -446,14 +446,14 @@ f3a <- plot.PCA(
   label = "var"
 )
 
-f3b <- plot.PCA(pca
-                , choix = c("ind")
-                , habillage = 2
-                , cex = 0.5
-                , label = "quali"
-                # , invisible = "quali"
-                ) +
-      labs(color = "PEG (KPa)") 
+f3b <- plot.PCA(pca,
+  choix = c("ind"),
+  habillage = 2,
+  cex = 0.5,
+  label = "quali"
+  # , invisible = "quali"
+) +
+  labs(color = "PEG (KPa)")
 ```
 
 ```{r}
@@ -549,9 +549,9 @@ p1 <- mc %>%
     type = "bar",
     x = "Inoculant",
     y = "emmean",
-    group = "Fertilization"
-    , ylimits = c(0, 140, 20)
-    , ylab = "Plant height (cm)",
+    group = "Fertilization",
+    ylimits = c(0, 140, 20),
+    ylab = "Plant height (cm)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
@@ -597,9 +597,9 @@ p2 <- mc %>%
     type = "bar",
     x = "Inoculant",
     y = "emmean",
-    group = "Fertilization"
-    , ylimits = c(0, 100, 20)
-    , ylab = "Flowering (days)",
+    group = "Fertilization",
+    ylimits = c(0, 100, 20),
+    ylab = "Flowering (days)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
@@ -645,9 +645,9 @@ p3 <- mc %>%
     type = "bar",
     x = "Inoculant",
     y = "emmean",
-    group = "Fertilization"
-    , ylimits = c(0, 100, 20)
-    , ylab = "Pod weight (g)",
+    group = "Fertilization",
+    ylimits = c(0, 100, 20),
+    ylab = "Pod weight (g)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
@@ -693,9 +693,9 @@ p4 <- mc %>%
     type = "bar",
     x = "Inoculant",
     y = "emmean",
-    group = "Fertilization"
-    , ylimits = c(0, 20, 5)
-    , ylab = "Pods (pods/plants)",
+    group = "Fertilization",
+    ylimits = c(0, 20, 5),
+    ylab = "Pods (pods/plants)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
@@ -903,11 +903,6 @@ pp <- fig %>%
 
 knitr::include_graphics(pp)
 ```
-
-```{r}
-
-```
-
 
 # References
 
