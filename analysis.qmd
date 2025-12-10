@@ -1,6 +1,6 @@
 ---
-title: ""
-author: ""
+title: "Bio-Inoculation and Optimized Fertilization Enhance Productivity and Resource-Use Efficiency in Pea (Pisum sativum L.)"
+author: "Francisco Guevara-Fernández; Sebastian Casas-Niño; Milagros Munoz-Salas; Wagner Meza-Maicelo; Manuel Oliva-Cruz; Flavio Lozano-Isla"
 format:
   html:
     toc: true
@@ -23,18 +23,12 @@ execute:
 
 ```{r}
 #| label:  setup
-library(emmeans)
 library(corrplot)
-library(multcomp)
 library(FSA)
 library(agricolae)
-library(tidyverse)
-library(car)
-library(lme4)
-library(googlesheets4)
 library(factoextra)
-library(FactoMineR)
 library(GerminaR)
+library(lubridate)
 source("https://inkaverse.com/setup.r")
 ```
 
@@ -58,7 +52,7 @@ inoculation <- gs %>%
 glimpse(inoculation)
 
 climate <- gs %>%
-  range_read(ss = ., sheet = "STable4") %>%
+  range_read(ss = ., sheet = "STable1") %>%
   mutate(across(1:2, ~ as.factor(.)))
 
 glimpse(climate)
@@ -82,34 +76,12 @@ sm <- inoculation %>%
 sm %>% kable(align = "c")
 ```
 
-# Research Objective
+# Materials & Methods
 
-1. To evaluate the effects of bio-inoculation and PEG 6000 stress on pea seed biomass, weight, and germination on pea crop.
-
-> Figura: Proceso germinativo de arverja inoculados co bioestimulantes en condicioens de estres hídrico simulado. (a) Gerinación (%). (b) Tiempo medio de Germinación (c) Sincronia de la Germinación. (d) Indice de vigor de la germinación
-(e) Peso se las radiculas
-
-> PCA germinación
-
-1. To demonstrate the combined effects of bio-inoculation and fertilization on field experiment on pea crop
-
-- Correlación de las variables por ambiente
-- Una MLT y calcular las medias ajustadas (BLUEs)
-
-> Figura: Las variables de campo
-
-> Figura: PCA
-
-## RO 1
-
-To evaluate the effects of bio-inoculation and PEG 6000 stress on pea seed biomass, weight, and germination on pea crop.
-
-# Meteorological data
-
-Climatic conditions of the study area located in the Tambogrande district, Piura region.
+## Meteorological data
 
 ```{r}
-met <- range_read(ss = gs, sheet = "STable4") %>%
+met <- range_read(ss = gs, sheet = "STable1") %>%
   mutate(date = as_date(fecha))
 
 scale1 <- 2
@@ -179,15 +151,20 @@ plot <- list(
 plots <- plot_grid(legend, plot, ncol = 1, align = "v", rel_heights = c(0.05, 1))
 
 
-plots %>%
+pp <- plots %>%
   ggsave2(
-    plot = ., "submission/climate.jpg", units = "cm",
+    plot = ., "submission/Figure_2.jpg", units = "cm",
     width = 25, height = 25
   )
 
-
-knitr::include_graphics("submission/climate.jpg")
+knitr::include_graphics(pp)
 ```
+
+# Research Objective
+
+## RO 1
+
+To evaluate the effects of bio-inoculation and PEG 6000 stress on pea seed biomass, weight, and germination on pea crop.
 
 ### Germination (%)
 
@@ -208,9 +185,7 @@ gsm <- germination %>%
 # Pea data set processed
 
 gsm %>%
-  head(10) %>%
-  mutate(across(where(is.numeric), ~ round(., 2))) %>%
-  kable(caption = "Function ger_summary performe ten germination indices")
+  kable(label = "Germination indices")
 ```
 
 #### Germination Percentage (GRP)
@@ -246,7 +221,7 @@ grp <- mc %>%
     x = "peg",
     y = "emmean",
     group = "Inoculant",
-    ylimits = c(0, 200, 50),
+    ylimits = c(0, 140, 20),
     ylab = "Germination ('%')",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
@@ -291,7 +266,7 @@ mgt <- mc %>%
     x = "peg",
     y = "emmean",
     group = "Inoculant",
-    ylimits = c(0, 6, 1),
+    ylimits = c(0, 4, 1),
     ylab = "Mean germination time (days)",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
@@ -336,7 +311,7 @@ syn <- mc %>%
     x = "peg",
     y = "emmean",
     group = "Inoculant",
-    ylimits = c(0, 2, 0.5),
+    ylimits = c(0, 1.5, 0.5),
     ylab = "Synchronization Index",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
@@ -390,7 +365,7 @@ gvi <- mc %>%
     x = "peg",
     y = "emmean",
     group = "Inoculant",
-    ylimits = c(0, 10, 2),
+    ylimits = c(0, 8, 2),
     ylab = "Germination vigor Index",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
@@ -402,9 +377,6 @@ gvi <- mc %>%
 gvi
 ```
 
-#### Figure 2
-
-Univariate analysis of the variables that determine the agronomic characteristics of mango.
 
 ```{r}
 legend <- cowplot::get_plot_component(grp, "guide-box-top", return_all = TRUE)
@@ -433,43 +405,40 @@ plot2 <- list(
 
 fig2 <- plot_grid(legend, plot2, ncol = 1, align = "v", rel_heights = c(0.05, 1))
 
-fig2 %>%
+pp <- fig2 %>%
   ggsave2(
-    plot = ., "submission/Figure_2.jpg",
+    plot = ., "submission/Figure_3.jpg",
     units = "cm",
     width = 24,
     height = 16
   )
 
-fig2 %>%
-  ggsave2(
-    plot = ., "submission/Figure_2.eps",
-    units = "cm",
-    width = 24,
-    height = 16
-  )
-
-knitr::include_graphics("submission/Figure_2.jpg")
+knitr::include_graphics(pp)
 ```
 
-#### Multivariate
-
-Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
+#### Multivariate germination analysis
 
 ```{r}
 mv <- gsm2 %>%
   group_by(Inoculant, peg) %>%
-  select(grp, mgt, syn, gv) %>%
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
-  unite("treat", Inoculant:peg, sep = " ") %>%
-  mutate(treat = paste0(treat, " MPa"))
+  dplyr::select(grp, mgt, syn, gv) %>%
+  summarise(across(where(is.numeric), ~ mean(., na.rm = T))) 
 
 pca <- mv %>%
-  PCA(scale.unit = T, quali.sup = 1, graph = F)
+  PCA(scale.unit = T, quali.sup = c(1, 2), graph = F)
 
 # summary
 
+pcainfo <- factoextra::get_pca(pca)
+
+sink("files/pca_ger.txt")
+cat("\nPrincipal Component Analysis Results\n")
 summary(pca, nbelements = Inf, nb.dec = 2)
+cat("\nCorrelations between variables and dimensions\n")
+pca$cor
+cat("\nContributions of the variables\n")
+pca$contrib
+sink()
 
 f3a <- plot.PCA(
   x = pca, choix = "var",
@@ -477,40 +446,31 @@ f3a <- plot.PCA(
   label = "var"
 )
 
-f3b <- plot.PCA(
-  x = pca, choix = "ind",
-  habillage = 1,
-  invisible = c("ind"),
-  cex = 0.8,
-  ylim = c(-3, 3),
-  xlim = c(-4, 4)
-)
+f3b <- plot.PCA(pca
+                , choix = c("ind")
+                , habillage = 2
+                , cex = 0.5
+                , label = "quali"
+                # , invisible = "quali"
+                ) +
+      labs(color = "PEG (KPa)") 
 ```
-
-#### Figure 3
-
-Principal Component Analysis (PCA).
 
 ```{r}
 fig <- list(f3a, f3b) %>%
   plot_grid(
     plotlist = ., ncol = 2, nrow = 1,
     labels = "auto",
-    rel_widths = c(1, 1.3)
+    rel_widths = c(1, 1.4)
   )
-fig %>%
+
+pp <- fig %>%
   ggsave2(
-    plot = ., "submission/Figure_3.jpg", units = "cm",
+    plot = ., "submission/Figure_4.jpg", units = "cm",
     width = 25, height = 10
   )
 
-fig %>%
-  ggsave2(
-    plot = ., "submission/Figure_3.eps", units = "cm",
-    width = 25, height = 10
-  )
-
-knitr::include_graphics("submission/Figure_3.jpg")
+knitr::include_graphics("submission/Figure_4.jpg")
 ```
 
 #### Correlation
@@ -530,12 +490,12 @@ df_Molinopampa <- inoculation %>%
 
 #  Unir ambos sitios
 df_wide <- df_Lamud %>%
-  select(-Site) %>%
+  dplyr::select(-Site) %>%
   left_join(
-    df_Molinopampa %>% select(-Site),
+    df_Molinopampa %>% dplyr::select(-Site),
     by = c("block", "Inoculant", "Fertilization", "treat", "row")
   ) %>%
-  select(starts_with("Lamud_"), starts_with("Molinopampa_"))
+  dplyr::select(starts_with("Lamud_"), starts_with("Molinopampa_"))
 
 cor_matrix <- cor(df_wide, use = "pairwise.complete.obs")
 
@@ -590,12 +550,12 @@ p1 <- mc %>%
     x = "Inoculant",
     y = "emmean",
     group = "Fertilization"
-    # , ylimits = c(0, 200, 50)
+    , ylimits = c(0, 140, 20)
     , ylab = "Plant height (cm)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
-    # sig = "group",
+    sig = "group",
     color = T
   ) +
   facet_wrap(~Site)
@@ -638,12 +598,12 @@ p2 <- mc %>%
     x = "Inoculant",
     y = "emmean",
     group = "Fertilization"
-    # , ylimits = c(0, 200, 50)
+    , ylimits = c(0, 100, 20)
     , ylab = "Flowering (days)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
-    # sig = "group",
+    sig = "group",
     color = T
   ) +
   facet_wrap(~Site)
@@ -686,12 +646,12 @@ p3 <- mc %>%
     x = "Inoculant",
     y = "emmean",
     group = "Fertilization"
-    # , ylimits = c(0, 200, 50)
+    , ylimits = c(0, 100, 20)
     , ylab = "Pod weight (g)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
-    # sig = "group",
+    sig = "group",
     color = T
   ) +
   facet_wrap(~Site)
@@ -734,12 +694,12 @@ p4 <- mc %>%
     x = "Inoculant",
     y = "emmean",
     group = "Fertilization"
-    # , ylimits = c(0, 200, 50)
+    , ylimits = c(0, 20, 5)
     , ylab = "Pods (pods/plants)",
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
-    # sig = "group",
+    sig = "group",
     color = T
   ) +
   facet_wrap(~Site)
@@ -787,7 +747,7 @@ p5 <- mc %>%
     xlab = "Inoculant",
     glab = "Dose",
     error = "SE",
-    # sig = "group",
+    sig = "group",
     color = T
   ) +
   facet_wrap(~Site) +
@@ -795,10 +755,6 @@ p5 <- mc %>%
 
 p5
 ```
-
-#### Figure 5
-
-Univariate analysis of the variables that determine the agronomic characteristics of mango.
 
 ```{r}
 legend <- cowplot::get_plot_component(p1, "guide-box-top", return_all = TRUE)
@@ -845,7 +801,7 @@ plot2 <- list(
 
 fig5 <- plot_grid(legend, plot2, ncol = 1, align = "v", rel_heights = c(0.05, 1))
 
-fig5 %>%
+pp <- fig5 %>%
   ggsave2(
     plot = ., "submission/Figure_5.jpg",
     units = "cm",
@@ -853,7 +809,7 @@ fig5 %>%
     height = 25
   )
 
-knitr::include_graphics("submission/Figure_5.jpg")
+knitr::include_graphics(pp)
 ```
 
 ### Table 1
@@ -870,7 +826,7 @@ summary_table <- map2_dfr(vars, labels, function(var, label) {
     data = inoculation, digits = 2, na.rm = TRUE
   ) %>%
     mutate(Variable = label) %>%
-    select(Variable, Inoculant, Fertilization, mean, sd, min, max)
+    dplyr::select(Variable, Inoculant, Fertilization, mean, sd, min, max)
 })
 
 summary_table %>% kable(align = "c")
@@ -881,12 +837,10 @@ summary_table %>%
 
 #### Multivariate
 
-Principal Component Analysis (PCA) of agronomic traits in the mango crop based on the use of rootstock-interstock combinations.
-
 ```{r}
 mv <- inoculation %>%
   group_by(Inoculant, Fertilization) %>%
-  select(pl_height, days_flower, pod_weight, pod_n, yield) %>%
+  dplyr::select(pl_height, days_flower, pod_weight, pod_n, yield) %>%
   summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
   unite("treat", Inoculant:Fertilization, sep = "-") %>%
   rename(
@@ -902,15 +856,24 @@ pca <- mv %>%
 
 # summary
 
-summary(pca, nbelements = Inf, nb.dec = 2)
+pcainfo <- factoextra::get_pca(pca)
 
-f4a <- plot.PCA(
+sink("files/pca_field.txt")
+cat("\nPrincipal Component Analysis Results\n")
+summary(pca, nbelements = Inf, nb.dec = 2)
+cat("\nCorrelations between variables and dimensions\n")
+pca$cor
+cat("\nContributions of the variables\n")
+pca$contrib
+sink()
+
+f6a <- plot.PCA(
   x = pca, choix = "var",
   cex = 0.8,
   label = "var"
 )
 
-f4b <- plot.PCA(
+f6b <- plot.PCA(
   x = pca, choix = "ind",
   habillage = 1,
   invisible = c("ind"),
@@ -920,27 +883,30 @@ f4b <- plot.PCA(
 )
 ```
 
-#### Figure 4
+#### Figure 6
 
 Principal Component Analysis (PCA).
 
 ```{r}
-fig <- list(f4a, f4b) %>%
+fig <- list(f6a, f6b) %>%
   plot_grid(
     plotlist = ., ncol = 2, nrow = 1,
     labels = "auto",
     rel_widths = c(1, 1.3)
   )
-fig %>%
+
+pp <- fig %>%
   ggsave2(
-    plot = ., "submission/Figure_4.jpg", units = "cm",
+    plot = ., "submission/Figure_6.jpg", units = "cm",
     width = 25, height = 10
   )
 
-knitr::include_graphics("submission/Figure_4.jpg")
+knitr::include_graphics(pp)
 ```
 
+```{r}
 
+```
 
 
 # References
