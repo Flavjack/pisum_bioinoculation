@@ -323,7 +323,7 @@ syn <- mc %>%
 syn
 ```
 
-#### Germination vigor index (GVI)
+#### Seedling vigor index (SVI)
 
 ```{r}
 # analysis of variance
@@ -334,10 +334,10 @@ weight_res <- germination %>%
 
 gsm2 <- gsm %>%
   left_join(weight_res, by = c("Inoculant", "peg", "block")) %>%
-  mutate(gv = weight * grp / 100) %>%
+  mutate(svi = weight * grp / 100) %>%
   mutate(across(where(is.numeric), ~ round(., 2)))
 
-av <- lmer(gv ~ 0 + (1 | block) + Inoculant * peg, data = gsm2)
+av <- lmer(svi ~ 0 + (1 | block) + Inoculant * peg, data = gsm2)
 
 Anova(av, type = 3, test.statistic = "F")
 
@@ -356,9 +356,9 @@ mc <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(peg = factor(peg, levels = c("-0.8", "-0.6", "-0.4", "-0.2", "0")))
 
-mc %>% kable(caption = "Germination vigor index mean comparision")
+mc %>% kable(caption = "Seedling vigor index mean comparision")
 
-gvi <- mc %>%
+svi <- mc %>%
   fplot(
     data = .,
     type = "bar",
@@ -366,7 +366,7 @@ gvi <- mc %>%
     y = "emmean",
     group = "Inoculant",
     ylimits = c(0, 8, 2),
-    ylab = "Germination vigor Index",
+    ylab = "Seedling vigor index",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
     error = "SE",
@@ -374,7 +374,7 @@ gvi <- mc %>%
     color = T
   )
 
-gvi
+svi
 ```
 
 
@@ -395,7 +395,7 @@ plot2 <- list(
     axis.ticks.x = element_blank()
   ),
   syn + theme(legend.position = "none"),
-  gvi + theme(legend.position = "none")
+  svi + theme(legend.position = "none")
 ) %>%
   plot_grid(
     plotlist = ., ncol = 2,
@@ -421,8 +421,14 @@ knitr::include_graphics(pp)
 ```{r}
 mv <- gsm2 %>%
   group_by(Inoculant, peg) %>%
-  dplyr::select(grp, mgt, syn, gv) %>%
-  summarise(across(where(is.numeric), ~ mean(., na.rm = T)))
+  dplyr::select(grp, mgt, syn, svi) %>%
+  summarise(
+    across(
+      where(is.numeric),
+      ~ mean(.x, na.rm = TRUE),
+      .names = "{toupper(.col)}"
+    )
+  ) 
 
 pca <- mv %>%
   PCA(scale.unit = T, quali.sup = c(1, 2), graph = F)
