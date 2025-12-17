@@ -29,6 +29,7 @@ library(agricolae)
 library(factoextra)
 library(GerminaR)
 library(lubridate)
+library(RColorBrewer)
 source("https://inkaverse.com/setup.r")
 ```
 
@@ -482,39 +483,97 @@ knitr::include_graphics("submission/Figure_4.jpg")
 #### Correlation
 
 ```{r}
-# Variables de interés
-vars_eval <- c("pl_height", "days_flower", "pod_weight", "pod_n", "yield")
+# ===============================
+# 1. Variables de interés
+# ===============================
+vars_eval <- c(
+  "pl_height",
+  "days_flower",
+  "pod_weight",
+  "pod_n",
+  "yield"
+)
 
-# Crear data frames por cada sitio
+# ===============================
+# 2. Crear data frames por sitio
+# ===============================
 df_Lamud <- inoculation %>%
-  filter(Site == "Lamud") %>%
-  rename_with(~ paste0("Lamud_", .x), all_of(vars_eval))
+  dplyr::filter(Site == "Lamud") %>%
+  dplyr::rename_with(~ paste0("Lamud_", .x), all_of(vars_eval))
 
 df_Molinopampa <- inoculation %>%
-  filter(Site == "Molinopampa") %>%
-  rename_with(~ paste0("Molinopampa_", .x), all_of(vars_eval))
+  dplyr::filter(Site == "Molinopampa") %>%
+  dplyr::rename_with(~ paste0("Molinopampa_", .x), all_of(vars_eval))
 
-#  Unir ambos sitios
+# ===============================
+# 3. Unir ambos sitios en formato ancho
+# ===============================
 df_wide <- df_Lamud %>%
   dplyr::select(-Site) %>%
-  left_join(
+  dplyr::left_join(
     df_Molinopampa %>% dplyr::select(-Site),
     by = c("block", "Inoculant", "Fertilization", "treat", "row")
   ) %>%
-  dplyr::select(starts_with("Lamud_"), starts_with("Molinopampa_"))
+  dplyr::select(
+    starts_with("Lamud_"),
+    starts_with("Molinopampa_")
+  )
 
-cor_matrix <- cor(df_wide, use = "pairwise.complete.obs")
+# ===============================
+# 4. Renombrar variables (abreviaturas)
+# ===============================
+cn <- colnames(df_wide)
 
-corrplot(
+cn <- gsub("pl_height",   "PH",    cn)
+cn <- gsub("days_flower", "FD",    cn)
+cn <- gsub("pod_weight",  "PW",    cn)
+cn <- gsub("pod_n",       "PN",    cn)
+cn <- gsub("yield",       "Yield", cn)
+
+colnames(df_wide) <- cn
+
+# ===============================
+# 5. Matriz de correlación
+# ===============================
+cor_matrix <- cor(
+  df_wide,
+  use = "pairwise.complete.obs"
+)
+
+# ===============================
+# 6. Paleta de colores
+# ===============================
+col_pal <- colorRampPalette(
+  rev(RColorBrewer::brewer.pal(11, "RdBu"))
+)(200)
+
+# ===============================
+# 7. Guardar figura (JPG)
+# ===============================
+jpeg(
+  filename = "submission/ESM2.jpg",
+  width = 3000,
+  height = 2200,
+  res = 300,
+  quality = 100
+)
+
+corrplot::corrplot(
   cor_matrix,
   method = "color",
   type = "upper",
   order = "hclust",
+  col = col_pal,
   addCoef.col = "black",
+  number.cex = 0.7,
   tl.col = "black",
+  tl.cex = 0.8,
   tl.srt = 45,
-  col = colorRampPalette(c("red", "white", "blue"))(200) # Paleta de colores
+  diag = FALSE,
+  cl.cex = 0.8
 )
+
+dev.off()
 ```
 
 ## RO 2
@@ -541,32 +600,32 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>%
+mc_ph <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc <- na.omit(mc)
+mc_ph <- na.omit(mc_ph)
 
-mc %>% kable(caption = "Plant Height mean comparision")
+mc_ph %>% kable(caption = "Plant Height mean comparision")
 
-p1 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Inoculant",
-    y = "emmean",
-    group = "Fertilization",
-    ylimits = c(0, 140, 20),
-    ylab = "Plant height (cm)",
-    xlab = "Inoculant",
-    glab = "Dose",
-    error = "SE",
-    sig = "group",
-    color = T
-  ) +
-  facet_wrap(~Site)
-
-p1
+# p1 <- mc %>%
+#   plot_smr(
+#     data = .,
+#     type = "bar",
+#     x = "Inoculant",
+#     y = "emmean",
+#     group = "Fertilization",
+#     ylimits = c(0, 140, 20),
+#     ylab = "Plant height (cm)",
+#     xlab = "Inoculant",
+#     glab = "Dose",
+#     error = "SE",
+#     sig = "group",
+#     color = T
+#   ) +
+#   facet_wrap(~Site)
+# 
+# p1
 ```
 
 ### Flowering
@@ -589,32 +648,32 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>%
+mc_fd <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc <- na.omit(mc)
+mc_fd <- na.omit(mc_fd)
 
-mc %>% kable(caption = "Flowering mean comparision")
+mc_fd %>% kable(caption = "Flowering mean comparision")
 
-p2 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Inoculant",
-    y = "emmean",
-    group = "Fertilization",
-    ylimits = c(0, 100, 20),
-    ylab = "Flowering (days)",
-    xlab = "Inoculant",
-    glab = "Dose",
-    error = "SE",
-    sig = "group",
-    color = T
-  ) +
-  facet_wrap(~Site)
-
-p2
+# p2 <- mc %>%
+#   plot_smr(
+#     data = .,
+#     type = "bar",
+#     x = "Inoculant",
+#     y = "emmean",
+#     group = "Fertilization",
+#     ylimits = c(0, 100, 20),
+#     ylab = "Flowering (days)",
+#     xlab = "Inoculant",
+#     glab = "Dose",
+#     error = "SE",
+#     sig = "group",
+#     color = T
+#   ) +
+#   facet_wrap(~Site)
+# 
+# p2
 ```
 
 ### Pod weight
@@ -637,32 +696,32 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>%
+mc_pw <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc <- na.omit(mc)
+mc_pw <- na.omit(mc_pw)
 
-mc %>% kable(caption = "Pod weight mean comparision")
+mc_pw %>% kable(caption = "Pod weight mean comparision")
 
-p3 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Inoculant",
-    y = "emmean",
-    group = "Fertilization",
-    ylimits = c(0, 100, 20),
-    ylab = "Pod weight (g)",
-    xlab = "Inoculant",
-    glab = "Dose",
-    error = "SE",
-    sig = "group",
-    color = T
-  ) +
-  facet_wrap(~Site)
-
-p3
+# p3 <- mc %>%
+#   plot_smr(
+#     data = .,
+#     type = "bar",
+#     x = "Inoculant",
+#     y = "emmean",
+#     group = "Fertilization",
+#     ylimits = c(0, 100, 20),
+#     ylab = "Pod weight (g)",
+#     xlab = "Inoculant",
+#     glab = "Dose",
+#     error = "SE",
+#     sig = "group",
+#     color = T
+#   ) +
+#   facet_wrap(~Site)
+# 
+# p3
 ```
 
 ### Pods per plant
@@ -685,32 +744,32 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>%
+mc_pn <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc <- na.omit(mc)
+mc_pn <- na.omit(mc_pn)
 
-mc %>% kable(caption = "Pod weight mean comparision")
+mc_pn %>% kable(caption = "Pod weight mean comparision")
 
-p4 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Inoculant",
-    y = "emmean",
-    group = "Fertilization",
-    ylimits = c(0, 20, 5),
-    ylab = "Pods (pods/plants)",
-    xlab = "Inoculant",
-    glab = "Dose",
-    error = "SE",
-    sig = "group",
-    color = T
-  ) +
-  facet_wrap(~Site)
-
-p4
+# p4 <- mc %>%
+#   plot_smr(
+#     data = .,
+#     type = "bar",
+#     x = "Inoculant",
+#     y = "emmean",
+#     group = "Fertilization",
+#     ylimits = c(0, 20, 5),
+#     ylab = "Pods (pods/plants)",
+#     xlab = "Inoculant",
+#     glab = "Dose",
+#     error = "SE",
+#     sig = "group",
+#     color = T
+#   ) +
+#   facet_wrap(~Site)
+# 
+# p4
 ```
 
 ### Yield
@@ -733,89 +792,33 @@ mc2 <- emmeans(av, ~ Site | Fertilization | Inoculant) %>%
   mutate(across(".group", ~ toupper(.))) %>%
   rename(sig2 = ".group")
 
-mc <- merge(mc2, mc1) %>%
+mc_yd <- merge(mc2, mc1) %>%
   unite(col = "group", c("sig1", "sig2"), sep = "") %>%
   mutate(Inoculant = factor(Inoculant, levels = c("Control", "Amysub", "Rizoplant", "Trichops")))
 
-mc <- na.omit(mc)
+mc_yd <- na.omit(mc_yd)
 
-mc %>% kable(caption = "Yield mean comparision")
+mc_yd %>% kable(caption = "Yield mean comparision")
 
-p5 <- mc %>%
-  plot_smr(
-    data = .,
-    type = "bar",
-    x = "Inoculant",
-    y = "emmean",
-    group = "Fertilization"
-    # , ylimits = c(0, 200, 50)
-    , ylab = "Yield (kg/ha)",
-    xlab = "Inoculant",
-    glab = "Dose",
-    error = "SE",
-    sig = "group",
-    color = T
-  ) +
-  facet_wrap(~Site) +
-  theme(axis.text.y = element_text(angle = 90, vjust = 0.5))
-
-p5
-```
-
-```{r}
-legend <- cowplot::get_plot_component(p1, "guide-box-top", return_all = TRUE)
-
-plot2 <- list(
-  p1 + theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    strip.text.x = element_text() # muestra site
-  ),
-  p2 + theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    strip.text.x = element_blank() # oculta site
-  ),
-  p3 + theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    strip.text.x = element_blank()
-  ),
-  p4 + theme(
-    legend.position = "none",
-    axis.title.x = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    strip.text.x = element_blank()
-  ),
-  p5 + theme(
-    legend.position = "none",
-    strip.text.x = element_blank() # oculta site
-  )
-) %>%
-  plot_grid(
-    plotlist = ., ncol = 1,
-    labels = "auto",
-    rel_heights = c(1, 1)
-  )
-
-fig5 <- plot_grid(legend, plot2, ncol = 1, align = "v", rel_heights = c(0.05, 1))
-
-pp <- fig5 %>%
-  ggsave2(
-    plot = ., "submission/Figure_5.jpg",
-    units = "cm",
-    width = 24,
-    height = 25
-  )
-
-knitr::include_graphics(pp)
+# p5 <- mc %>%
+#   plot_smr(
+#     data = .,
+#     type = "bar",
+#     x = "Inoculant",
+#     y = "emmean",
+#     group = "Fertilization"
+#     # , ylimits = c(0, 200, 50)
+#     , ylab = "Yield (kg/ha)",
+#     xlab = "Inoculant",
+#     glab = "Dose",
+#     error = "SE",
+#     sig = "group",
+#     color = T
+#   ) +
+#   facet_wrap(~Site) +
+#   theme(axis.text.y = element_text(angle = 90, vjust = 0.5))
+# 
+# p5
 ```
 
 ### Table 1
@@ -823,21 +826,39 @@ knitr::include_graphics(pp)
 Descriptive statistics of the variables that determine the effects of bio-inoculation and fertilization on field experiment on pea crop.
 
 ```{r}
-vars <- c("pl_height", "days_flower", "pod_weight", "pod_n", "yield")
+format_emm <- function(df) {
+  df %>%
+    dplyr::mutate(
+      value = sprintf("%.2f ± %.2f %s", emmean, SE, group)
+    ) %>%
+    dplyr::select(Site, Inoculant, Fertilization, value)
+}
 
-labels <- c("Plant height (cm)", "Flowering (days)", "Pod weight (g)", "Pods per plant", "Yield (kg/ha)")
+mc_list <- list(
+  ph = mc_ph,
+  fd = mc_fd,
+  pw = mc_pw,
+  pn = mc_pn,
+  yd = mc_yd
+)
 
-summary_table <- map2_dfr(vars, labels, function(var, label) {
-  FSA::Summarize(reformulate("Inoculant * Fertilization", var),
-    data = inoculation, digits = 2, na.rm = TRUE
-  ) %>%
-    mutate(Variable = label) %>%
-    dplyr::select(Variable, Inoculant, Fertilization, mean, sd, min, max)
-})
+mc_list <- map(mc_list, format_emm)
 
-summary_table %>% kable(align = "c")
+colnames(mc_list$ph)[4] <- "Plant height (cm)"
+colnames(mc_list$fd)[4] <- "Flowering (days)"
+colnames(mc_list$pw)[4] <- "Pod weight (g)"
+colnames(mc_list$pn)[4] <- "Pods per plant"
+colnames(mc_list$yd)[4] <- "Yield (kg ha-1)"
 
-summary_table %>%
+final_table <- mc_list$ph %>%
+  left_join(mc_list$fd, by = c("Site", "Inoculant", "Fertilization")) %>%
+  left_join(mc_list$pw, by = c("Site", "Inoculant", "Fertilization")) %>%
+  left_join(mc_list$pn, by = c("Site", "Inoculant", "Fertilization")) %>%
+  left_join(mc_list$yd, by = c("Site", "Inoculant", "Fertilization"))
+
+final_table %>% kable(align = "c")
+
+final_table %>%
   write_sheet(ss = gs, sheet = "tb1")
 ```
 
@@ -850,10 +871,10 @@ mv <- inoculation %>%
   summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
   unite("treat", Inoculant:Fertilization, sep = "-") %>%
   rename(
-    ph = pl_height,
-    fd = days_flower,
-    pd = pod_weight,
-    pn = pod_n,
+    PH = pl_height,
+    FD = days_flower,
+    PW = pod_weight,
+    PN = pod_n,
     Yield = yield
   )
 
