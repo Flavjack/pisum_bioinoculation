@@ -910,7 +910,7 @@ f6b <- plot.PCA(
 )
 ```
 
-#### Figure 6
+#### Figure 5
 
 Principal Component Analysis (PCA).
 
@@ -924,7 +924,7 @@ fig <- list(f6a, f6b) %>%
 
 pp <- fig %>%
   ggsave2(
-    plot = ., "submission/Figure_6.jpg", units = "cm",
+    plot = ., "submission/Figure_5.jpg", units = "cm",
     width = 25, height = 10
   )
 
