@@ -216,7 +216,7 @@ mc <- merge(mc2, mc1) %>%
 mc %>% kable(caption = "Germination percentage mean comparision")
 
 grp <- mc %>%
-  fplot(
+  plot_smr(
     data = .,
     type = "bar",
     x = "peg",
@@ -261,7 +261,7 @@ mc <- merge(mc2, mc1) %>%
 mc %>% kable(caption = "Mean Germination Time comparision")
 
 mgt <- mc %>%
-  fplot(
+  plot_smr(
     data = .,
     type = "bar",
     x = "peg",
@@ -279,7 +279,7 @@ mgt <- mc %>%
 mgt
 ```
 
-#### Synchronization Index (SYN)
+#### Germination synchrony (SYN)
 
 ```{r}
 # analysis of variance
@@ -306,14 +306,14 @@ mc <- merge(mc2, mc1) %>%
 mc %>% kable(caption = "Synchronization Index mean comparision")
 
 syn <- mc %>%
-  fplot(
+  plot_smr(
     data = .,
     type = "bar",
     x = "peg",
     y = "emmean",
     group = "Inoculant",
     ylimits = c(0, 1.5, 0.5),
-    ylab = "Synchronization Index",
+    ylab = "Germination synchrony",
     xlab = "PEG (MPa)",
     glab = "Inoculant",
     error = "SE",
@@ -360,7 +360,7 @@ mc <- merge(mc2, mc1) %>%
 mc %>% kable(caption = "Seedling vigor index mean comparision")
 
 svi <- mc %>%
-  fplot(
+  plot_smr(
     data = .,
     type = "bar",
     x = "peg",
@@ -460,7 +460,11 @@ f3b <- plot.PCA(pca,
   label = "quali"
   # , invisible = "quali"
 ) +
-  labs(color = "PEG (KPa)")
+  labs(color = "PEG (KPa)") +
+  scale_color_manual(values = c(
+    "#D55E00", "#0072B2", "#009E73",
+    "#CC79A7", "#F0E442"
+  ))
 ```
 
 ```{r}
@@ -871,11 +875,11 @@ mv <- inoculation %>%
   summarise(across(where(is.numeric), ~ mean(., na.rm = T))) %>%
   unite("treat", Inoculant:Fertilization, sep = "-") %>%
   rename(
-    PH = pl_height,
-    FD = days_flower,
-    PW = pod_weight,
-    PN = pod_n,
-    Yield = yield
+    PLH = pl_height,
+    NDF = days_flower,
+    PTW = pod_weight,
+    PTN = pod_n,
+    YLD = yield
   )
 
 pca <- mv %>%
