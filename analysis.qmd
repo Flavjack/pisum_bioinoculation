@@ -456,8 +456,8 @@ f3a <- plot.PCA(
 f3b <- plot.PCA(pca,
   choix = c("ind"),
   habillage = 2,
-  cex = 0.5,
-  label = "quali"
+  cex = 0.7
+  , label = "quali"
   # , invisible = "quali"
 ) +
   labs(color = "PEG (KPa)") +
