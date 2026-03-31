@@ -110,9 +110,9 @@ plot_1 <- met_lamud %>%
     sec.axis = sec_axis(~ . * scale1, name = "Precipitation (mm)")
   ) +
   scale_x_date(date_breaks = "7 day", date_labels = "%d-%b", name = NULL) +
-  theme_minimal_grid() +
   theme(legend.position = "top") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme_classic()
 
 
 plot_2 <- met_molino %>%
@@ -131,7 +131,7 @@ plot_2 <- met_molino %>%
     sec.axis = sec_axis(~ . * scale2, name = "Precipitation (mm)")
   ) +
   scale_x_date(date_breaks = "7 day", date_labels = "%d-%b", name = NULL) +
-  theme_minimal_grid() +
+  theme_classic() +
   theme(legend.position = "top") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
@@ -229,7 +229,7 @@ grp <- mc %>%
     error = "SE",
     sig = "group",
     color = T
-  )
+  )  + theme_classic()
 
 grp
 ```
@@ -274,7 +274,7 @@ mgt <- mc %>%
     error = "SE",
     sig = "group",
     color = T
-  )
+  )  + theme_classic()
 
 mgt
 ```
@@ -319,7 +319,7 @@ syn <- mc %>%
     error = "SE",
     sig = "group",
     color = T
-  )
+  )  + theme_classic()
 
 syn
 ```
@@ -373,7 +373,7 @@ svi <- mc %>%
     error = "SE",
     sig = "group",
     color = T
-  )
+  )  + theme_classic()
 
 svi
 ```
@@ -451,7 +451,7 @@ f3a <- plot.PCA(
   x = pca, choix = "var",
   cex = 0.8,
   label = "var"
-)
+) + theme_classic()
 
 f3b <- plot.PCA(pca,
   choix = c("ind"),
@@ -464,7 +464,7 @@ f3b <- plot.PCA(pca,
   scale_color_manual(values = c(
     "#D55E00", "#0072B2", "#009E73",
     "#CC79A7", "#F0E442"
-  ))
+  )) + theme_classic()
 ```
 
 ```{r}
@@ -902,7 +902,7 @@ f6a <- plot.PCA(
   x = pca, choix = "var",
   cex = 0.8,
   label = "var"
-)
+) + theme_classic()
 
 f6b <- plot.PCA(
   x = pca, choix = "ind",
@@ -911,7 +911,7 @@ f6b <- plot.PCA(
   cex = 0.8,
   ylim = c(-3, 3),
   xlim = c(-4, 4)
-)
+) + theme_classic()
 ```
 
 #### Figure 5
