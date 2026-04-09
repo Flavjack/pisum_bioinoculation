@@ -232,6 +232,23 @@ grp <- mc %>%
   )  + theme_classic()
 
 grp
+
+lgd <- mc %>%
+  plot_smr(
+    data = .,
+    type = "bar",
+    x = "peg",
+    y = "emmean",
+    group = "Inoculant",
+    ylimits = c(0, 140, 20),
+    ylab = "Germination ('%')",
+    xlab = "PEG (MPa)",
+    glab = "Inoculant",
+    error = "SE",
+    sig = "group",
+    color = T
+    , legend = "top"
+  ) 
 ```
 
 #### Mean Germination Time (MGT)
@@ -380,7 +397,7 @@ svi
 
 
 ```{r}
-legend <- cowplot::get_plot_component(grp, "guide-box-top", return_all = TRUE)
+legend <- cowplot::get_plot_component(lgd, "guide-box-top", return_all = TRUE)
 
 plot2 <- list(
   grp + theme(
